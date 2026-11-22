@@ -1,77 +1,70 @@
-import { formatNumber, formatPercentage, formatQuantity } from "../utils/formatters";
+import { useTranslation } from "react-i18next";
+import { Table } from "../../../shared/ui";
+import { GROUP, enumLabel } from "../utils/enums";
+import {
+    CAPACITY_BAR_CLASSES,
+    EMPTY,
+    capacityLevel,
+    formatNumber,
+    formatPercentage,
+    formatQuantity,
+} from "../utils/formatters";
+
+function UsageBar({ zone, t }) {
+    const percent = zone.usedPercent;
+    const hasPercent = Number.isFinite(percent);
+    const label = zone.zoneCode ?? zone.name;
+    return (
+        <div className="flex min-w-40 items-center gap-3">
+            <div
+                className="h-2.5 min-w-20 flex-1 overflow-hidden rounded-pill bg-neutral-bg"
+                role="progressbar"
+                aria-label={t("zones.usageLabel", { zone: label })}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={hasPercent ? Math.min(percent, 100) : undefined}
+                aria-valuetext={
+                    hasPercent ? t("zones.usedValue", { value: formatPercentage(percent) }) : t("zones.usageUnavailable")
+                }
+            >
+                <div
+                    className={`h-full rounded-pill ${CAPACITY_BAR_CLASSES[capacityLevel(percent)]}`}
+                    style={{ width: `${hasPercent ? Math.min(percent, 100) : 0}%` }}
+                />
+            </div>
+            <span className="w-16 text-right tabular-nums text-text-muted">
+                {hasPercent ? t("percent", { value: formatPercentage(percent) }) : EMPTY}
+            </span>
+        </div>
+    );
+}
 
 export default function StorageZonesTable({ zones }) {
+    const { t } = useTranslation("cropstorage");
+    const columns = [
+        { key: "zoneCode", header: t("zones.columns.code"), cell: (zone) => zone.zoneCode ?? EMPTY },
+        { key: "name", header: t("zones.columns.name"), cell: (zone) => zone.name || EMPTY },
+        { key: "status", header: t("zones.columns.status"), cell: (zone) => enumLabel(t, GROUP.operationalStatus, zone.status) },
+        {
+            key: "capacityKg",
+            header: t("zones.columns.capacity"),
+            align: "right",
+            cell: (zone) => formatQuantity(zone.capacityKg),
+        },
+        {
+            key: "capacityM3",
+            header: t("zones.columns.capacityM3"),
+            align: "right",
+            cell: (zone) => t("units.cubicMeters", { value: formatNumber(zone.capacityM3) }),
+        },
+        { key: "used", header: t("zones.columns.used"), cell: (zone) => <UsageBar zone={zone} t={t} /> },
+    ];
     return (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-            <table className="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead className="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
-                    <tr>
-                        <th className="px-4 py-3 font-semibold">Code</th>
-                        <th className="px-4 py-3 font-semibold">Name</th>
-                        <th className="px-4 py-3 font-semibold">Type</th>
-                        <th className="px-4 py-3 text-right font-semibold">Capacity</th>
-                        <th className="px-4 py-3 text-right font-semibold">Capacity (m³)</th>
-                        <th className="px-4 py-3 font-semibold">Used</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                    {zones.map((zone) => {
-                        const percent = zone.usedPercent;
-                        const hasPercent = Number.isFinite(percent);
-                        const color =
-                            percent < 70
-                                ? "#16a34a"
-                                : percent <= 90
-                                  ? "#f59e0b"
-                                  : "#ef4444";
-                        return (
-                            <tr key={zone.id ?? zone.zoneCode ?? zone.code}>
-                                <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
-                                    {zone.zoneCode ?? zone.code ?? "—"}
-                                </td>
-                                <td className="px-4 py-3 text-gray-700">{zone.name || "—"}</td>
-                                <td className="px-4 py-3 text-gray-700">
-                                    {zone.type ?? zone.zoneType ?? "—"}
-                                </td>
-                                <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
-                                    {formatQuantity(zone.capacityKg)}
-                                </td>
-                                <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
-                                    {formatNumber(zone.capacityM3)} m³
-                                </td>
-                                <td className="min-w-40 px-4 py-3">
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className="h-2.5 min-w-20 flex-1 overflow-hidden rounded-full bg-gray-100"
-                                            role="progressbar"
-                                            aria-label={`${zone.zoneCode ?? zone.code ?? zone.name} capacity used`}
-                                            aria-valuemin={0}
-                                            aria-valuemax={100}
-                                            aria-valuenow={hasPercent ? Math.min(percent, 100) : undefined}
-                                            aria-valuetext={
-                                                hasPercent ? `${formatPercentage(percent)}% used` : "Usage unavailable"
-                                            }
-                                        >
-                                            <div
-                                                className={`h-full rounded-full ${
-                                                    hasPercent ? "" : "bg-gray-300"
-                                                }`}
-                                                style={{
-                                                    width: `${hasPercent ? Math.min(percent, 100) : 0}%`,
-                                                    ...(hasPercent ? { background: color } : {}),
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="w-14 text-right tabular-nums text-gray-600">
-                                            {hasPercent ? `${formatPercentage(percent)}%` : "—"}
-                                        </span>
-                                    </div>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
+        <Table
+            columns={columns}
+            rows={zones}
+            getRowKey={(zone) => zone.id ?? zone.zoneCode}
+            caption={t("zones.tableCaption")}
+        />
     );
 }

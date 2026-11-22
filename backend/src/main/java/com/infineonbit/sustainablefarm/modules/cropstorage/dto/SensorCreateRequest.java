@@ -1,8 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.OperationalStatus;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
@@ -11,7 +13,7 @@ public record SensorCreateRequest(
         String sensorType,
         String name,
         @Valid EntityReferenceRequest storageZone,
-        @NotBlank String status,
+        @NotNull OperationalStatus status,
         LocalDate installationDate) {
 
     public Sensor toEntity() {

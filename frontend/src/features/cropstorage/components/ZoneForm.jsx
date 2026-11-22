@@ -1,23 +1,13 @@
 import { useState } from "react";
-import CropStorageField from "./CropStorageField";
+import { useTranslation } from "react-i18next";
+import { Button, Card, Field, Input, Select } from "../../../shared/ui";
+import { GROUP, OPERATIONAL_STATUSES, enumOptions } from "../utils/enums";
+import FormMessage from "./FormMessage";
 
-const INITIAL_VALUES = {
-    zoneCode: "",
-    name: "",
-    description: "",
-    capacityKg: "",
-    status: "",
-};
-
-const FIELD_DEFINITIONS = [
-    { name: "zoneCode", label: "Code", required: true },
-    { name: "name", label: "Name" },
-    { name: "capacityKg", label: "Capacity (kg)", type: "number", min: "0.01", step: "0.01", required: true },
-    { name: "status", label: "Status", required: true },
-    { name: "description", label: "Description" },
-];
+const INITIAL_VALUES = { zoneCode: "", name: "", description: "", capacityKg: "", status: "ACTIVE" };
 
 export default function ZoneForm({ isSubmitting, fieldErrors, submitError, success, onSubmit, onClearError }) {
+    const { t } = useTranslation("cropstorage");
     const [values, setValues] = useState(INITIAL_VALUES);
 
     function update(name, value) {
@@ -32,46 +22,49 @@ export default function ZoneForm({ isSubmitting, fieldErrors, submitError, succe
             name: values.name.trim() || null,
             description: values.description.trim() || null,
             capacityKg: Number(values.capacityKg),
-            status: values.status.trim(),
+            status: values.status,
         });
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-xl border border-gray-200 bg-white p-5"
-        >
-            <h2 className="font-heading text-lg font-semibold text-gray-900">Create storage zone</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {FIELD_DEFINITIONS.map(({ name, label, ...props }) => (
-                    <CropStorageField
-                        key={name}
-                        id={`zone-${name}`}
-                        label={label}
-                        value={values[name]}
-                        onChange={(event) => update(name, event.target.value)}
-                        error={fieldErrors?.[name]}
-                        {...props}
-                    />
-                ))}
-            </div>
-            {submitError && (
-                <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
-            {success && (
-                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
-                    Storage zone created successfully.
-                </p>
-            )}
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                {isSubmitting ? "Creating…" : "Create zone"}
-            </button>
-        </form>
+        <Card title={t("zones.form.title")}>
+            <form onSubmit={handleSubmit}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label={t("zones.form.code")} required error={fieldErrors?.zoneCode}>
+                        <Input value={values.zoneCode} onChange={(event) => update("zoneCode", event.target.value)} required />
+                    </Field>
+                    <Field label={t("zones.form.name")} error={fieldErrors?.name}>
+                        <Input value={values.name} onChange={(event) => update("name", event.target.value)} />
+                    </Field>
+                    <Field label={t("zones.form.capacityKg")} required error={fieldErrors?.capacityKg}>
+                        <Input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={values.capacityKg}
+                            onChange={(event) => update("capacityKg", event.target.value)}
+                            required
+                        />
+                    </Field>
+                    <Field label={t("zones.form.status")} required error={fieldErrors?.status}>
+                        <Select
+                            value={values.status}
+                            onChange={(event) => update("status", event.target.value)}
+                            options={enumOptions(t, GROUP.operationalStatus, OPERATIONAL_STATUSES)}
+                            required
+                        />
+                    </Field>
+                    <Field label={t("zones.form.description")} error={fieldErrors?.description} className="sm:col-span-2">
+                        <Input value={values.description} onChange={(event) => update("description", event.target.value)} />
+                    </Field>
+                </div>
+                <FormMessage error={submitError} success={success ? t("zones.form.success") : null} />
+                <div className="mt-4">
+                    <Button type="submit" loading={isSubmitting}>
+                        {t("zones.form.submit")}
+                    </Button>
+                </div>
+            </form>
+        </Card>
     );
 }

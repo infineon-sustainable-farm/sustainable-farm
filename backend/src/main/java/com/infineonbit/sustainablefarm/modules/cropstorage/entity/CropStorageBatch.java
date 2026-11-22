@@ -1,17 +1,19 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -23,18 +25,17 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
+/**
+ * A batch held in the store. Shared concepts are referenced by key only
+ * (ADR 0003 and 0004), with the foreign keys of CropStorageForeignKeys: the
+ * mango variety by its Plants catalogue key, the harvest by its Plants id.
+ */
 @Entity(name = "CropStorageBatch")
 @Table(name = "crop_storage_batch")
 @Getter
 @Setter
-public class CropStorageBatch {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class CropStorageBatch extends BaseEntity {
 
     // Prevent concurrent stock updates from overwriting each other; the losing update fails and can retry.
     @Version
@@ -44,23 +45,29 @@ public class CropStorageBatch {
     @Column(nullable = false, unique = true)
     private String batchCode;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String productType;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CropProductType productType;
 
-        // Anar: lifecycle stages FRESH -> DRIED -> PACKAGED -> WASTE / RETURNED
-    private String productStage;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ProductStage productStage;
 
     private String origin;
-        @ManyToOne(fetch = FetchType.LAZY)
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
-    private String mangoVariety;
+    /** Key of the Plants variety catalogue (plants.api.VarietyCatalog), never a typed name. */
+    @Column(name = "variety_key", length = 40)
+    private String varietyKey;
 
     private LocalDate harvestDate;
 
-    // Optional Plants harvest ID (GET /api/plants/harvests) for traceability; null when the batch is not from Plants.
+    /** Optional Plants harvest (plants.api.HarvestLookup); null when the batch does not come from Plants. */
+    @Column(name = "harvest_id")
     private Long harvestId;
 
     private LocalDate processingDate;
@@ -85,16 +92,18 @@ public class CropStorageBatch {
 
     private String qualityGrade;
 
-    @NotBlank
-    private String status;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private BatchStatus status;
 
-            @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "storage_zone_id")
     private StorageZone storageZone;
 
     private LocalDate expectedDispatchDate;
 
-        private LocalDate expiryDate;
+    private LocalDate expiryDate;
 
     // FIFO sorts higher priorities first; 0 must sort after positive priorities on H2 and PostgreSQL.
     @NotNull
@@ -102,29 +111,17 @@ public class CropStorageBatch {
     @Column(nullable = false)
     private Integer customerPriority = 0;
 
-    @PositiveOrZero
-    @Column(precision = 12, scale = 2)
-    private BigDecimal valuePerKgFcfa;
+    /** Value of one kilogram, in XOF (CFA franc), the currency of the inventory valuation. */
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "value_per_kg_amount", precision = 14, scale = 2))
+    @AttributeOverride(name = "currency", column = @Column(name = "value_per_kg_currency", length = 3))
+    private Money valuePerKg;
 
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
+    /** A new batch holds its whole initial quantity until a movement or a loss changes it. */
     @PrePersist
-    protected void onCreate() {
-        // Microsecond precision, as stored by PostgreSQL: the API-005 creation response
-        // then carries the same entry_timestamp as a later read.
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
-        createdAt = now;
-        updatedAt = now;
+    protected void defaultCurrentQuantity() {
         if (currentQuantityKg == null) {
             currentQuantityKg = initialQuantityKg;
         }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
     }
 }

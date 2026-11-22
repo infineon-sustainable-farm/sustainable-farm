@@ -1,12 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -17,17 +15,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
+/**
+ * A zone of the store (warehouse room, cold room), with its capacity and the
+ * climate range its sensors are checked against. Not a farm zone: farm zones
+ * are irrigation areas on a block.
+ */
 @Entity
 @Table(name = "storage_zone")
 @Getter
 @Setter
-public class StorageZone {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class StorageZone extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false, unique = true)
@@ -60,23 +58,8 @@ public class StorageZone {
 
     private Boolean coolingAvailable;
 
-    @NotBlank
-    private String status;
-
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OperationalStatus status;
 }

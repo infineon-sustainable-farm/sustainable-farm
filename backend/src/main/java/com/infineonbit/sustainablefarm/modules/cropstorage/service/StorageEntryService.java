@@ -4,22 +4,30 @@ import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StorageEntryRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StorageEntryResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropProductType;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.MovementType;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.ProductStage;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StockMovementRepository;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.StorageZoneRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -29,8 +37,10 @@ import java.util.Objects;
  * ready after packaging) and stores it as a new batch plus its traceability
  * IN movement, in one transaction: if any write fails, nothing is kept.
  * An unknown zone answers 404, a capacity overflow or an already registered
- * batch_id answers 409 (a concurrent duplicate is caught by the unique batch
- * code and also answers 409, see CropStorageEntryExceptionHandler).
+ * batch_id answers 409. A concurrent duplicate passes the existence check but
+ * is refused by the unique batch code: it is turned into the same
+ * ConflictException here, so the common core handler answers 409 (no module
+ * exception handler, ARCHITECTURE.md "errors are handled only in core").
  *
  * <p>The zone row is locked before its capacity is checked, so two concurrent
  * entries (or movements) into the same zone cannot both pass the check.
@@ -39,25 +49,29 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class StorageEntryService {
 
-    static final String ENTRY_STATUS = "STORED";
+    static final BatchStatus ENTRY_STATUS = BatchStatus.STORED;
 
     private final CropStorageBatchRepository batchRepository;
     private final StorageZoneRepository storageZoneRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final SharedReferences sharedReferences;
 
     @Transactional
     public StorageEntryResponse registerEntry(StorageEntryRequest request) {
         if (batchRepository.existsByBatchCode(request.batchId())) {
             throw new ConflictException("Storage entry already registered for batch_id " + request.batchId());
         }
+        // Validated upstream as digits only; it must also be a known Plants harvest (400).
+        Long harvestId = request.harvestId() == null ? null : Long.valueOf(request.harvestId());
+        sharedReferences.requireHarvest(harvestId);
         BigDecimal quantity = request.driedQuantityKg();
         StorageZone zone = lockZoneWithRoom(request, quantity);
         BigDecimal remainingBefore = remainingCapacity(zone);
 
         CropStorageBatch batch = new CropStorageBatch();
         batch.setBatchCode(request.batchId());
-        batch.setProductType("DRIED_MANGO");
-        batch.setProductStage("PACKAGED");
+        batch.setProductType(CropProductType.DRIED_MANGO);
+        batch.setProductStage(ProductStage.PACKAGED);
         batch.setQualityGrade(request.productGrade());
         batch.setStatus(ENTRY_STATUS);
         batch.setStorageZone(zone);
@@ -65,17 +79,24 @@ public class StorageEntryService {
         // The calendar date of packaging in UTC, not in the sender's offset.
         batch.setPackagingDate(request.packagingDate().withOffsetSameInstant(ZoneOffset.UTC).toLocalDate());
         batch.setStorageEntryDate(LocalDate.now());
-        // Validated upstream as digits only: never silently dropped.
-        batch.setHarvestId(request.harvestId() == null ? null : Long.valueOf(request.harvestId()));
-        CropStorageBatch savedBatch = batchRepository.save(batch);
+        batch.setHarvestId(harvestId);
+        CropStorageBatch savedBatch;
+        try {
+            // Flushed now so that a unique-key refusal surfaces here, inside the transaction.
+            savedBatch = batchRepository.saveAndFlush(batch);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Storage entry already registered for batch_id " + request.batchId());
+        }
 
         StockMovement movement = new StockMovement();
-        movement.setType("IN");
+        movement.setType(MovementType.IN);
         movement.setQuantityKg(quantity);
         movement.setBatch(savedBatch);
         movement.setToZone(zone);
         movement.setReason("Product Transformation storage entry, packaging " + request.packagingId());
-        movement.setMovedAt(savedBatch.getCreatedAt() != null ? savedBatch.getCreatedAt() : LocalDateTime.now());
+        movement.setMovedAt(savedBatch.getCreatedAt() != null
+                ? LocalDateTime.ofInstant(savedBatch.getCreatedAt(), ZoneId.systemDefault())
+                : LocalDateTime.now());
         stockMovementRepository.save(movement);
 
         return new StorageEntryResponse(
@@ -83,7 +104,7 @@ public class StorageEntryService {
                 String.valueOf(zone.getId()),
                 toUtc(savedBatch.getCreatedAt()),
                 remainingBefore.subtract(quantity),
-                savedBatch.getStatus());
+                savedBatch.getStatus().name());
     }
 
     /**
@@ -114,7 +135,7 @@ public class StorageEntryService {
                 zone == null ? null : String.valueOf(zone.getId()),
                 toUtc(batch.getCreatedAt()),
                 zone == null ? null : remainingCapacity(zone),
-                batch.getStatus());
+                batch.getStatus() == null ? null : batch.getStatus().name());
     }
 
     /**
@@ -134,9 +155,15 @@ public class StorageEntryService {
                     .map(StorageZone::getId)
                     .orElseThrow(() -> new ConflictException("Zone capacity exceeded"));
         }
-        StorageZone zone = storageZoneRepository.findForUpdateById(zoneId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Storage location not found with id " + requested));
+        StorageZone zone;
+        try {
+            zone = storageZoneRepository.findForUpdateById(zoneId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Storage location not found with id " + requested));
+        } catch (PessimisticLockingFailureException e) {
+            // Lock wait timed out: another write holds the zone. Retryable, not a server error.
+            throw new ConflictException("Storage zone busy, retry the storage entry");
+        }
         if (remainingCapacity(zone).compareTo(quantity) < 0) {
             throw new ConflictException("Zone capacity exceeded");
         }
@@ -159,10 +186,11 @@ public class StorageEntryService {
         return zone.getCapacityKg() != null ? zone.getCapacityKg().subtract(used) : BigDecimal.ZERO;
     }
 
-    /** Entity timestamps are written with LocalDateTime.now(), i.e. in the JVM zone. */
-    private static OffsetDateTime toUtc(LocalDateTime serverLocal) {
-        return serverLocal == null
-                ? null
-                : serverLocal.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toOffsetDateTime();
+    /**
+     * The creation instant in UTC, at the microsecond precision the database keeps, so the
+     * creation answer and a later read carry the same entry_timestamp.
+     */
+    private static OffsetDateTime toUtc(Instant createdAt) {
+        return createdAt == null ? null : createdAt.truncatedTo(ChronoUnit.MICROS).atOffset(ZoneOffset.UTC);
     }
 }

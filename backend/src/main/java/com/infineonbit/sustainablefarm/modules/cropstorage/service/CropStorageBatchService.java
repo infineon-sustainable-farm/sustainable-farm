@@ -3,6 +3,7 @@ package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.ValuationSummary;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Supplier;
@@ -15,9 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -44,6 +43,7 @@ public class CropStorageBatchService {
     private final CropStorageBatchRepository batchRepository;
     private final SupplierRepository supplierRepository;
     private final StorageZoneRepository storageZoneRepository;
+    private final SharedReferences sharedReferences;
 
     /**
      * Saves a new batch exactly as received; the batch code follows the team
@@ -55,12 +55,24 @@ public class CropStorageBatchService {
      * the same zone (API-005 entry, IN movement, another creation) take the same
      * lock and are serialized, so they cannot overfill it together.
      *
+     * <p>The variety is given by name and stored as its Plants catalogue key; a harvest
+     * id must be a known Plants harvest (400 otherwise).
+     *
      * @param batch batch parsed from the request body
+     * @param varietyName variety name to resolve, or {@code null}
      * @return the saved batch with its generated id
      * @throws ConflictException when the batch stock would exceed the zone capacity
      */
+    /** Same as {@link #create(CropStorageBatch, String)} for a batch without a variety. */
     @Transactional
     public CropStorageBatch create(CropStorageBatch batch) {
+        return create(batch, null);
+    }
+
+    @Transactional
+    public CropStorageBatch create(CropStorageBatch batch, String varietyName) {
+        batch.setVarietyKey(sharedReferences.varietyKeyOf(varietyName));
+        sharedReferences.requireHarvest(batch.getHarvestId());
         if (batch.getSupplier() != null) {
             Long supplierId = requireId(batch.getSupplier().getId(), "supplier");
             Supplier supplier = supplierRepository.findById(supplierId)
@@ -133,28 +145,26 @@ public class CropStorageBatchService {
      * The value of one batch is its current quantity multiplied by its
      * value per kg; batches without a value contribute zero.
      *
-     * @return ordered map with totalKg, totalTonnes, totalLb, totalM3,
-     *         totalValueFcfa, totalValueEur, totalValueUsd
+     * @return the totals in kg, tonne, lb, m3, XOF, EUR and USD
      */
-    public Map<String, Object> summary() {
+    public ValuationSummary summary() {
         BigDecimal totalKg = BigDecimal.ZERO;
         BigDecimal totalValueFcfa = BigDecimal.ZERO;
         for (CropStorageBatch b : batchRepository.findAll()) {
             BigDecimal qty = b.getCurrentQuantityKg() != null ? b.getCurrentQuantityKg() : BigDecimal.ZERO;
             totalKg = totalKg.add(qty);
-            if (b.getValuePerKgFcfa() != null) {
-                totalValueFcfa = totalValueFcfa.add(qty.multiply(b.getValuePerKgFcfa()));
+            if (b.getValuePerKg() != null) {
+                totalValueFcfa = totalValueFcfa.add(qty.multiply(b.getValuePerKg().amount()));
             }
         }
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("totalKg", totalKg);
-        result.put("totalTonnes", totalKg.divide(new BigDecimal("1000"), 3, RoundingMode.HALF_UP));
-        result.put("totalLb", totalKg.divide(KG_PER_LB, 3, RoundingMode.HALF_UP));
-        result.put("totalM3", totalKg.divide(KG_PER_M3, 3, RoundingMode.HALF_UP));
-        result.put("totalValueFcfa", totalValueFcfa);
-        result.put("totalValueEur", totalValueFcfa.divide(XOF_PER_EUR, 2, RoundingMode.HALF_UP));
-        result.put("totalValueUsd", totalValueFcfa.divide(XOF_PER_USD, 2, RoundingMode.HALF_UP));
-        return result;
+        return new ValuationSummary(
+                totalKg,
+                totalKg.divide(new BigDecimal("1000"), 3, RoundingMode.HALF_UP),
+                totalKg.divide(KG_PER_LB, 3, RoundingMode.HALF_UP),
+                totalKg.divide(KG_PER_M3, 3, RoundingMode.HALF_UP),
+                totalValueFcfa,
+                totalValueFcfa.divide(XOF_PER_EUR, 2, RoundingMode.HALF_UP),
+                totalValueFcfa.divide(XOF_PER_USD, 2, RoundingMode.HALF_UP));
     }
 
     /**

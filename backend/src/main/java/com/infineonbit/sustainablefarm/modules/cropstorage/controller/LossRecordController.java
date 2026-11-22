@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.LossRecord;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.LossRecordResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.LossRecordCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.LossRecordService;
 import jakarta.validation.Valid;
@@ -20,19 +21,20 @@ import java.util.List;
 public class LossRecordController {
 
     private final LossRecordService lossRecordService;
+    private final CropStorageMapper mapper;
 
     @PostMapping
-    public LossRecord create(@Valid @RequestBody LossRecordCreateRequest request) {
-        return lossRecordService.create(request.toEntity());
+    public LossRecordResponse create(@Valid @RequestBody LossRecordCreateRequest request) {
+        return mapper.lossRecord(lossRecordService.create(request.toEntity()));
     }
 
     @GetMapping
-    public List<LossRecord> findAll() {
-        return lossRecordService.findAll();
+    public List<LossRecordResponse> findAll() {
+        return CropStorageMapper.all(lossRecordService.findAll(), mapper::lossRecord);
     }
 
     @GetMapping("/batch/{batchId}")
-    public List<LossRecord> findByBatch(@PathVariable Long batchId) {
-        return lossRecordService.findByBatch(batchId);
+    public List<LossRecordResponse> findByBatch(@PathVariable Long batchId) {
+        return CropStorageMapper.all(lossRecordService.findByBatch(batchId), mapper::lossRecord);
     }
 }

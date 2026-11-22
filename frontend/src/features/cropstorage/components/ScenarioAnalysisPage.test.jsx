@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import cropStorageRoutes from "../routes";
+import cropStorageRoutes, { nav } from "../routes";
 import ScenarioAnalysisPage from "./ScenarioAnalysisPage";
+import { i18n } from "../../../shared/i18n";
 
 beforeAll(() => {
     // Recharts' ResponsiveContainer needs ResizeObserver, absent from jsdom.
@@ -40,14 +40,28 @@ describe("Scenario Analysis page", () => {
             expect.arrayContaining(["index", "zones", "batches", "movements", "alerts", "quality", "scenario-analysis"]),
         );
 
+        expect(cropStorageRoutes[0].path).toBe("crop-storage");
+        expect(nav.shell).toBe(true);
+        expect(nav.items.map((item) => item.to)).toContain("/crop-storage/scenario-analysis");
+
         render(
-            <MemoryRouter initialEntries={["/cropstorage/scenario-analysis"]}>
+            <MemoryRouter initialEntries={["/crop-storage/scenario-analysis"]}>
                 <Routes>
-                    <Route path="/cropstorage/scenario-analysis" element={<ScenarioAnalysisPage />} />
+                    <Route path="/crop-storage/scenario-analysis" element={<ScenarioAnalysisPage />} />
                 </Routes>
             </MemoryRouter>,
         );
         expect(screen.getByRole("heading", { name: "What-if Scenario Analysis" })).toBeTruthy();
+    });
+
+    it("is translated: French labels and French number format", async () => {
+        await act(() => i18n.changeLanguage("fr"));
+        renderPage();
+
+        expect(await screen.findByRole("heading", { name: "Analyse de scénarios « et si »" })).toBeTruthy();
+        expect(screen.getByRole("button", { name: "Petite extension" }).getAttribute("aria-pressed")).toBe("true");
+        // fr-FR groups thousands with a narrow no-break space.
+        expect(result("Investissement initial").replace(/\s/g, " ")).toBe("7 750 000 FCFA");
     });
 
     it("starts on the Small expansion preset and states that values are unvalidated", () => {
@@ -71,11 +85,10 @@ describe("Scenario Analysis page", () => {
         expect([sensors.min, sensors.max, sensors.step]).toEqual(["0", "50", "1"]);
     });
 
-    it("applies a preset to every control and every result", async () => {
-        const user = userEvent.setup();
+    it("applies a preset to every control and every result", () => {
         renderPage();
 
-        await user.click(screen.getByRole("button", { name: "Full upgrade" }));
+        fireEvent.click(screen.getByRole("button", { name: "Full upgrade" }));
 
         expect(screen.getByRole("button", { name: "Full upgrade" }).getAttribute("aria-pressed")).toBe("true");
         expect(screen.getByRole("button", { name: "Small expansion" }).getAttribute("aria-pressed")).toBe("false");
@@ -89,13 +102,12 @@ describe("Scenario Analysis page", () => {
         expect(result("Net gain after 5 years")).toBe("−8,097,500 FCFA");
         expect(result("Financial outlook")).toBe("Break-even after 5 years");
 
-        await user.click(screen.getByRole("button", { name: "Solar power only" }));
+        fireEvent.click(screen.getByRole("button", { name: "Solar power only" }));
         expect(result("Initial investment")).toBe("3,500,000 FCFA");
         expect(result("Break-even point")).toBe("38 months (3.2 years)");
     });
 
-    it("recalculates on manual changes and clears the active preset", async () => {
-        const user = userEvent.setup();
+    it("recalculates on manual changes and clears the active preset", () => {
         renderPage();
 
         fireEvent.change(screen.getByLabelText("Additional storage capacity"), { target: { value: "0" } });
@@ -103,7 +115,7 @@ describe("Scenario Analysis page", () => {
         expect(result("Additional capacity")).toBe("0.0 t");
         expect(result("Initial investment")).toBe("250,000 FCFA");
 
-        await user.click(screen.getByRole("switch", { name: "Solar power installation" }));
+        fireEvent.click(screen.getByRole("switch", { name: "Solar power installation" }));
         expect(result("Initial investment")).toBe("3,750,000 FCFA");
 
         const table = screen.getByRole("table");

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.QualityCheck;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.QualityCheckResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.QualityCheckCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.QualityCheckService;
 import jakarta.validation.Valid;
@@ -20,19 +21,20 @@ import java.util.List;
 public class QualityCheckController {
 
     private final QualityCheckService qualityCheckService;
+    private final CropStorageMapper mapper;
 
     @PostMapping
-    public QualityCheck create(@Valid @RequestBody QualityCheckCreateRequest request) {
-        return qualityCheckService.create(request.toEntity());
+    public QualityCheckResponse create(@Valid @RequestBody QualityCheckCreateRequest request) {
+        return mapper.qualityCheck(qualityCheckService.create(request.toEntity()));
     }
 
     @GetMapping
-    public List<QualityCheck> findAll() {
-        return qualityCheckService.findAll();
+    public List<QualityCheckResponse> findAll() {
+        return mapper.qualityChecks(qualityCheckService.findAll());
     }
 
     @GetMapping("/batch/{batchId}")
-    public List<QualityCheck> findByBatch(@PathVariable Long batchId) {
-        return qualityCheckService.findByBatch(batchId);
+    public List<QualityCheckResponse> findByBatch(@PathVariable Long batchId) {
+        return mapper.qualityChecks(qualityCheckService.findByBatch(batchId));
     }
 }

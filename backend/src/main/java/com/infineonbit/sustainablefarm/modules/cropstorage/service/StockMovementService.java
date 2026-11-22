@@ -4,6 +4,7 @@ import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.MovementType;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import com.infineonbit.sustainablefarm.modules.cropstorage.repository.CropStorageBatchRepository;
@@ -82,9 +83,9 @@ public class StockMovementService {
         BigDecimal quantity = movement.getQuantityKg();
         BigDecimal current = batch.getCurrentQuantityKg() != null
                 ? batch.getCurrentQuantityKg() : BigDecimal.ZERO;
-        String type = movement.getType();
+        MovementType type = movement.getType();
 
-        if ("IN".equals(type)) {
+        if (type == MovementType.IN) {
             // Server-side twin of the movement form rule: stock always enters a zone,
             // otherwise it would escape every capacity check.
             if (toZone == null) {
@@ -96,12 +97,12 @@ public class StockMovementService {
             checkInCapacity(toZone, batch, resulting);
             batch.setStorageZone(toZone);
             batch.setCurrentQuantityKg(resulting);
-        } else if ("OUT".equals(type)) {
+        } else if (type == MovementType.OUT) {
             if (current.compareTo(quantity) < 0) {
                 throw new BusinessRuleException("Not enough stock in batch");
             }
             batch.setCurrentQuantityKg(current.subtract(quantity));
-        } else if ("TRANSFER".equals(type)) {
+        } else if (type == MovementType.TRANSFER) {
             if (toZone == null) {
                 throw new BusinessRuleException("A destination zone is required for TRANSFER");
             }

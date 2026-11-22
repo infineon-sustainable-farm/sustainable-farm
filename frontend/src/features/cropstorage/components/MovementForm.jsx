@@ -1,13 +1,11 @@
 import { useState } from "react";
-import CropStorageField from "./CropStorageField";
+import { useTranslation } from "react-i18next";
+import { Button, Card, Field, Input, Select } from "../../../shared/ui";
+import { GROUP, MOVEMENT_TYPES, enumLabel } from "../utils/enums";
+import { localDateTimeValue } from "../utils/dates";
+import FormMessage from "./FormMessage";
 
-const INITIAL_VALUES = {
-    batchId: "",
-    movementType: "",
-    quantityKg: "",
-    targetZoneId: "",
-    reason: "",
-};
+const INITIAL_VALUES = { batchId: "", movementType: "", quantityKg: "", targetZoneId: "", reason: "" };
 
 function getFieldError(errors, field, aliases = []) {
     for (const key of [field, ...aliases]) {
@@ -16,31 +14,10 @@ function getFieldError(errors, field, aliases = []) {
     return undefined;
 }
 
-export default function MovementForm({
-    batches,
-    zones,
-    isSubmitting,
-    fieldErrors,
-    submitError,
-    successNote,
-    onSubmit,
-    onClearFeedback,
-}) {
+export default function MovementForm({ batches, zones, isSubmitting, fieldErrors, submitError, success, onSubmit, onClearFeedback }) {
+    const { t } = useTranslation("cropstorage");
     const [values, setValues] = useState(INITIAL_VALUES);
-    const batchOptions = batches.map((batch) => ({
-        value: batch.id,
-        label: `${batch.batchCode ?? batch.batch_code ?? `Batch ${batch.id}`}${
-            batch.productType ?? batch.product_type
-                ? ` — ${batch.productType ?? batch.product_type}`
-                : ""
-        }`,
-    }));
-    const zoneOptions = zones.map((zone) => ({
-        value: zone.id,
-        label: zone.name
-            ? `${zone.zoneCode ?? zone.zone_code} — ${zone.name}`
-            : zone.zoneCode ?? zone.zone_code ?? `Zone ${zone.id}`,
-    }));
+    const needsZone = values.movementType === "IN" || values.movementType === "TRANSFER";
 
     function update(field, value) {
         setValues((current) => ({ ...current, [field]: value }));
@@ -55,81 +32,69 @@ export default function MovementForm({
             quantityKg: Number(values.quantityKg),
             targetZoneId: values.targetZoneId || null,
             reason: values.reason.trim() || null,
-            movedAt: new Date().toISOString(),
+            movedAt: localDateTimeValue(),
         });
     }
 
     return (
-        <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-white p-5">
-            <h2 className="font-heading text-lg font-semibold text-gray-900">Register movement</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <CropStorageField
-                    id="movement-batch"
-                    label="Batch"
-                    value={values.batchId}
-                    onChange={(event) => update("batchId", event.target.value)}
-                    options={batchOptions}
-                    required
-                    error={getFieldError(fieldErrors, "batchId", ["batch", "batch.id"])}
-                />
-                <CropStorageField
-                    id="movement-type"
-                    label="Movement type"
-                    value={values.movementType}
-                    onChange={(event) => update("movementType", event.target.value)}
-                    options={[
-                        { value: "IN", label: "IN" },
-                        { value: "OUT", label: "OUT" },
-                        { value: "TRANSFER", label: "TRANSFER" },
-                    ]}
-                    required
-                    error={getFieldError(fieldErrors, "movementType", ["type"])}
-                />
-                <CropStorageField
-                    id="movement-quantity"
-                    label="Quantity (kg)"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    value={values.quantityKg}
-                    onChange={(event) => update("quantityKg", event.target.value)}
-                    required
-                    error={getFieldError(fieldErrors, "quantityKg")}
-                />
-                <CropStorageField
-                    id="movement-target-zone"
-                    label="Target zone"
-                    value={values.targetZoneId}
-                    onChange={(event) => update("targetZoneId", event.target.value)}
-                    options={zoneOptions}
-                    required={values.movementType === "IN" || values.movementType === "TRANSFER"}
-                    error={getFieldError(fieldErrors, "targetZoneId", ["toZone", "toZone.id"])}
-                />
-                <CropStorageField
-                    id="movement-reason"
-                    label="Reason"
-                    value={values.reason}
-                    onChange={(event) => update("reason", event.target.value)}
-                    error={getFieldError(fieldErrors, "reason")}
-                />
-            </div>
-            {submitError && (
-                <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
-            {successNote && (
-                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
-                    {successNote}
-                </p>
-            )}
-            <button
-                type="submit"
-                disabled={isSubmitting || batches.length === 0}
-                className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                {isSubmitting ? "Registering…" : "Register movement"}
-            </button>
-        </form>
+        <Card title={t("movements.form.title")}>
+            <form onSubmit={handleSubmit}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label={t("movements.form.batch")} required error={getFieldError(fieldErrors, "batchId", ["batch", "batch.id"])}>
+                        <Select value={values.batchId} onChange={(event) => update("batchId", event.target.value)} required>
+                            <option value="">{t("form.choose")}</option>
+                            {batches.map((batch) => (
+                                <option key={batch.id} value={batch.id}>
+                                    {batch.batchCode}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label={t("movements.form.type")} required error={getFieldError(fieldErrors, "movementType", ["type"])}>
+                        <Select value={values.movementType} onChange={(event) => update("movementType", event.target.value)} required>
+                            <option value="">{t("form.choose")}</option>
+                            {MOVEMENT_TYPES.map((type) => (
+                                <option key={type} value={type}>
+                                    {enumLabel(t, GROUP.movementType, type)}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label={t("movements.form.quantityKg")} required error={getFieldError(fieldErrors, "quantityKg")}>
+                        <Input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={values.quantityKg}
+                            onChange={(event) => update("quantityKg", event.target.value)}
+                            required
+                        />
+                    </Field>
+                    <Field
+                        label={t("movements.form.targetZone")}
+                        required={needsZone}
+                        error={getFieldError(fieldErrors, "targetZoneId", ["toZone", "toZone.id"])}
+                    >
+                        <Select value={values.targetZoneId} onChange={(event) => update("targetZoneId", event.target.value)} required={needsZone}>
+                            <option value="">{t("form.none")}</option>
+                            {zones.map((zone) => (
+                                <option key={zone.id} value={zone.id}>
+                                    {zone.name ? `${zone.zoneCode} — ${zone.name}` : zone.zoneCode}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label={t("movements.form.reason")} error={getFieldError(fieldErrors, "reason")} className="sm:col-span-2">
+                        <Input value={values.reason} onChange={(event) => update("reason", event.target.value)} />
+                    </Field>
+                </div>
+                <FormMessage error={submitError} success={success ? t("movements.form.success") : null} />
+                <div className="mt-4">
+                    <Button type="submit" loading={isSubmitting} disabled={batches.length === 0}>
+                        {t("movements.form.submit")}
+                    </Button>
+                </div>
+            </form>
+        </Card>
     );
 }

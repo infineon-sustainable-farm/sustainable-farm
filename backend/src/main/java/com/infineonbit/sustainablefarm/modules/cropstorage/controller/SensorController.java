@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.SensorResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.SensorCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.SensorService;
 import jakarta.validation.Valid;
@@ -19,14 +20,15 @@ import java.util.List;
 public class SensorController {
 
     private final SensorService sensorService;
+    private final CropStorageMapper mapper;
 
     @PostMapping
-    public Sensor create(@Valid @RequestBody SensorCreateRequest request) {
-        return sensorService.create(request.toEntity());
+    public SensorResponse create(@Valid @RequestBody SensorCreateRequest request) {
+        return mapper.sensor(sensorService.create(request.toEntity()));
     }
 
     @GetMapping
-    public List<Sensor> findAll() {
-        return sensorService.findAll();
+    public List<SensorResponse> findAll() {
+        return CropStorageMapper.all(sensorService.findAll(), mapper::sensor);
     }
 }

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.SensorReading;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.SensorReadingResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.SensorReadingCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.SensorReadingService;
 import jakarta.validation.Valid;
@@ -24,6 +25,7 @@ import java.util.List;
 public class SensorReadingController {
 
     private final SensorReadingService sensorReadingService;
+    private final CropStorageMapper mapper;
 
     /**
      * Records one measure; an automatic alert may be raised as a side effect
@@ -33,8 +35,8 @@ public class SensorReadingController {
      * @return the saved reading
      */
     @PostMapping
-    public SensorReading create(@Valid @RequestBody SensorReadingCreateRequest request) {
-        return sensorReadingService.create(request.toEntity());
+    public SensorReadingResponse create(@Valid @RequestBody SensorReadingCreateRequest request) {
+        return mapper.reading(sensorReadingService.create(request.toEntity()));
     }
 
     /**
@@ -43,8 +45,8 @@ public class SensorReadingController {
      * @return every stored reading
      */
     @GetMapping
-    public List<SensorReading> findAll() {
-        return sensorReadingService.findAll();
+    public List<SensorReadingResponse> findAll() {
+        return CropStorageMapper.all(sensorReadingService.findAll(), mapper::reading);
     }
 
     /**
@@ -54,7 +56,7 @@ public class SensorReadingController {
      * @return readings of that sensor
      */
     @GetMapping("/sensor/{sensorId}")
-    public List<SensorReading> findBySensor(@PathVariable Long sensorId) {
-        return sensorReadingService.findBySensor(sensorId);
+    public List<SensorReadingResponse> findBySensor(@PathVariable Long sensorId) {
+        return CropStorageMapper.all(sensorReadingService.findBySensor(sensorId), mapper::reading);
     }
 }

@@ -1,3 +1,4 @@
+import { currentLocale } from "./formatters";
 /**
  * What-if Scenario Analysis: local simulation only.
  *
@@ -175,33 +176,38 @@ export function matchingPreset(inputs) {
     );
 }
 
-const fcfaFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-const oneDecimal = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-});
+// Number formats follow the language of the shell; English when no translation is given.
+function fcfaFormat() {
+    return new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 0 });
+}
+function oneDecimal() {
+    return new Intl.NumberFormat(currentLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
 
 /** FCFA rounded to the unit; a leading sign is kept for gains. */
 export function formatFcfa(value, { signed = false } = {}) {
     if (!Number.isFinite(value)) return "—";
     const rounded = Math.round(value);
-    const text = `${fcfaFormat.format(Math.abs(rounded))} FCFA`;
+    const text = `${fcfaFormat().format(Math.abs(rounded))} FCFA`;
     if (rounded < 0) return `−${text}`;
     return signed && rounded > 0 ? `+${text}` : text;
 }
 
 export function formatTonnes(value) {
-    return Number.isFinite(value) ? `${oneDecimal.format(value)} t` : "—";
+    return Number.isFinite(value) ? `${oneDecimal().format(value)} t` : "—";
 }
 
-export function formatPoints(value) {
-    return Number.isFinite(value) ? `${oneDecimal.format(value)} pts` : "—";
+export function formatPoints(value, t) {
+    if (!Number.isFinite(value)) return "—";
+    return t ? t("scenario.units.points", { value: oneDecimal().format(value) }) : `${oneDecimal().format(value)} pts`;
 }
 
-export function formatBreakEven(months) {
-    if (months == null) return "No break-even";
-    if (months === 0) return "Immediate";
-    return `${months} months (${oneDecimal.format(months / 12)} years)`;
+/** Break-even delay in months and years; translated with `t` (cropstorage namespace). */
+export function formatBreakEven(months, t) {
+    if (months == null) return t ? t("scenario.outlook.NO_BREAK_EVEN") : "No break-even";
+    if (months === 0) return t ? t("scenario.breakEven.immediate") : "Immediate";
+    const years = oneDecimal().format(months / 12);
+    return t ? t("scenario.breakEven.months", { months, years }) : `${months} months (${years} years)`;
 }
 
 export const OUTLOOK_LABELS = Object.freeze({
@@ -211,8 +217,23 @@ export const OUTLOOK_LABELS = Object.freeze({
     [OUTLOOK.NO_BREAK_EVEN]: "No break-even",
 });
 
+/** Outlook label, translated with `t` (keys scenario.outlook.<OUTLOOK>). */
+export function outlookLabel(outlook, t) {
+    return t ? t(`scenario.outlook.${outlook}`) : OUTLOOK_LABELS[outlook];
+}
+
 /** One-line summary shown on screen by the "Show summary" action (no file). */
-export function buildScenarioSummary(result) {
+export function buildScenarioSummary(result, t) {
+    if (t) {
+        return t("scenario.summary.text", {
+            investment: formatFcfa(result.investment),
+            cost: formatFcfa(result.annualCost),
+            net: formatFcfa(result.annualNetBenefit),
+            breakEven: formatBreakEven(result.breakEvenMonths, t),
+            fiveYear: formatFcfa(result.fiveYearNetGain, { signed: true }),
+            outlook: outlookLabel(result.outlook, t),
+        });
+    }
     return [
         `Investment: ${formatFcfa(result.investment)}`,
         `Operating cost: ${formatFcfa(result.annualCost)}/year`,

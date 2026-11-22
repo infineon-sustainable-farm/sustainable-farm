@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FileText, Info, SlidersHorizontal, TrendingUp } from "lucide-react";
 import {
     Bar,
@@ -10,10 +11,12 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
+import { Button, PageHeader } from "../../../shared/ui";
+import { currentLocale } from "../utils/formatters";
+import { usePageTitle } from "../utils/usePageTitle";
 import {
     INITIAL_PRESET,
     OUTLOOK,
-    OUTLOOK_LABELS,
     SCENARIO_ASSUMPTIONS as A,
     SCENARIO_LIMITS,
     SCENARIO_PRESETS,
@@ -23,33 +26,28 @@ import {
     formatFcfa,
     formatPoints,
     formatTonnes,
+    outlookLabel,
 } from "../utils/scenario";
 
-const PRESET_BUTTONS = [
-    { key: "small", label: "Small expansion" },
-    { key: "full", label: "Full upgrade" },
-    { key: "solar", label: "Solar power only" },
-];
+const PRESET_KEYS = ["small", "full", "solar"];
+// Recharts axis label placement (not interface text).
+const X_LABEL_POSITION = "insideBottom";
+const Y_LABEL_POSITION = "insideLeft";
 
 const SUMMARY_DURATION_MS = 5500;
 
-const compactFcfa = new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-});
-
-const CARD = "flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5";
-const FOCUS = "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
+const CARD = "flex flex-col gap-4 rounded-card border border-border-subtle bg-surface-raised p-5 shadow-raised";
+const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function SliderControl({ label, value, unit, limits, onChange }) {
     const id = useId();
     return (
         <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
-                <label htmlFor={id} className="text-sm font-medium text-gray-700">
+                <label htmlFor={id} className="text-sm font-medium text-text">
                     {label}
                 </label>
-                <output htmlFor={id} className="text-sm font-bold whitespace-nowrap text-primary">
+                <output htmlFor={id} className="text-sm font-bold whitespace-nowrap text-text-accent">
                     {value} {unit}
                 </output>
             </div>
@@ -64,7 +62,7 @@ function SliderControl({ label, value, unit, limits, onChange }) {
                 onChange={(event) => onChange(Number(event.target.value))}
                 className={`h-1.5 w-full cursor-pointer accent-primary ${FOCUS}`}
             />
-            <div className="flex justify-between text-xs text-gray-400" aria-hidden="true">
+            <div className="flex justify-between text-xs text-text-muted" aria-hidden="true">
                 <span>{limits.min}</span>
                 <span>{limits.max}</span>
             </div>
@@ -76,12 +74,12 @@ function ToggleControl({ label, hint, checked, onChange }) {
     const id = useId();
     const hintId = `${id}-hint`;
     return (
-        <div className="flex items-start justify-between gap-4 rounded-lg border border-gray-100 px-3 py-3">
+        <div className="flex items-start justify-between gap-4 rounded-control border border-border-subtle px-3 py-3">
             <div>
-                <label htmlFor={id} className="text-sm font-medium text-gray-700">
+                <label htmlFor={id} className="text-sm font-medium text-text">
                     {label}
                 </label>
-                <p id={hintId} className="mt-0.5 text-xs text-gray-500">
+                <p id={hintId} className="mt-0.5 text-xs text-text-muted">
                     {hint}
                 </p>
             </div>
@@ -99,24 +97,21 @@ function ToggleControl({ label, hint, checked, onChange }) {
 }
 
 function ResultRow({ label, value, tone }) {
-    const toneClass =
-        tone === "good" ? "text-success" : tone === "bad" ? "text-error" : "text-gray-900";
+    const toneClass = tone === "good" ? "text-success-fg" : tone === "bad" ? "text-error-fg" : "text-text";
     return (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm">
-            <dt className="text-gray-500">{label}</dt>
+        <div className="flex items-center justify-between gap-3 rounded-control border border-border-subtle bg-surface-muted px-3 py-2.5 text-sm">
+            <dt className="text-text-muted">{label}</dt>
             <dd className={`text-right font-bold ${toneClass}`}>{value}</dd>
         </div>
     );
 }
 
 export default function ScenarioAnalysisPage() {
+    const { t } = useTranslation("cropstorage");
+    usePageTitle("scenario.title");
     const [inputs, setInputs] = useState({ ...SCENARIO_PRESETS[INITIAL_PRESET] });
     const [activePreset, setActivePreset] = useState(INITIAL_PRESET);
     const [summary, setSummary] = useState(null);
-
-    useEffect(() => {
-        document.title = "Scenario Analysis — Crop Storage";
-    }, []);
 
     useEffect(() => {
         if (!summary) return undefined;
@@ -147,299 +142,216 @@ export default function ScenarioAnalysisPage() {
               : "bad";
 
     const chartData = result.projection.map((row) => ({
-        name: `Year ${row.year}`,
+        name: t("scenario.year", { year: row.year }),
         cost: Math.round(row.cumulativeCost),
         benefit: Math.round(row.cumulativeBenefit),
     }));
 
+    const compactFcfa = new Intl.NumberFormat(currentLocale(), { notation: "compact", maximumFractionDigits: 1 });
+    const assumptionRows = [
+        ["storageCost", formatFcfa(A.costPerM2)],
+        ["sensorCost", formatFcfa(A.costPerSensor)],
+        ["mangoValue", t("scenario.units.perTonne", { value: formatFcfa(A.pricePerTonne) })],
+        ["baselineLoss", t("scenario.units.percent", { value: A.baseLossPct })],
+        ["unmetDemand", t("scenario.units.tonnesPerYear", { value: A.unmetDemandTonnes })],
+        ["period", t("scenario.units.years", { value: A.projectionYears })],
+    ];
+    const allAssumptionRows = [
+        ["coolingInvestment", formatFcfa(A.coolingCost)],
+        ["solarInvestment", formatFcfa(A.solarCost)],
+        ["addedCapacity", t("scenario.units.tonnesPerM2", { value: A.tonnesPerM2 })],
+        ["sensorEffect", t("scenario.units.sensorEffect", { value: A.sensorLossReductionPts, max: A.maxEffectiveSensors })],
+        ["coolingEffect", t("scenario.units.coolingEffect", { value: A.coolingRelativeReduction * 100 })],
+        ["electricityBill", formatFcfa(A.annualElectricity)],
+        ["solarSaving", t("scenario.units.percent", { value: A.solarSavingsRate * 100 })],
+        ["referenceSurface", t("scenario.units.squareMeters", { value: A.baseStorageM2 })],
+        ["margin", t("scenario.units.perTonne", { value: formatFcfa(A.marginPerTonne) })],
+        ["storageUpkeep", t("scenario.units.perM2PerYear", { value: formatFcfa(A.storageMaintenancePerM2) })],
+        ["sensorUpkeep", t("scenario.units.percentOfCostPerYear", { value: A.sensorMaintenanceRate * 100 })],
+        ["coolingOperation", t("scenario.units.perYear", { value: formatFcfa(A.coolingOperatingCost) })],
+        ["solarUpkeep", t("scenario.units.percentOfCostPerYear", { value: A.solarMaintenanceRate * 100 })],
+    ];
+
     return (
-        <div className="min-h-dvh bg-gray-50">
-            <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6">
-                <header>
-                    <p className="font-heading text-xs font-bold tracking-widest text-primary uppercase">
-                        Crop Storage
-                    </p>
-                    <h1 className="font-heading mt-1 text-3xl font-bold text-gray-900">
-                        What-if Scenario Analysis
-                    </h1>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Simulate investment hypotheses and projected ROI.
-                    </p>
-                </header>
+        <div className="flex flex-col gap-5">
+            <PageHeader title={t("scenario.heading")} subtitle={t("scenario.subtitle")} />
 
-                <div
-                    role="note"
-                    className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-gray-800"
-                >
-                    <Info size={18} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
-                    <p>
-                        <strong>Demonstration simulation.</strong> All values and results are
-                        provisional, unvalidated assumptions — not farm measurements and not
-                        investment advice. This page calculates locally in your browser: it does not
-                        change any real storage capacity, does not write to the database and does not
-                        trigger any decision or authorisation.
-                    </p>
-                </div>
+            <div role="note" className="flex items-start gap-3 rounded-card bg-warning-tint p-4 text-sm text-text">
+                <Info size={18} className="mt-0.5 shrink-0 text-warning-fg" aria-hidden="true" />
+                <p>
+                    <strong>{t("scenario.disclaimerTitle")}</strong> {t("scenario.disclaimer")}
+                </p>
+            </div>
 
-                <div role="group" aria-label="Scenario presets" className="flex flex-wrap gap-2.5">
-                    {PRESET_BUTTONS.map(({ key, label }) => (
-                        <button
-                            key={key}
-                            type="button"
-                            aria-pressed={activePreset === key}
-                            onClick={() => applyPreset(key)}
-                            className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${FOCUS} ${
-                                activePreset === key
-                                    ? "border-primary bg-primary/15 text-primary"
-                                    : "border-gray-200 bg-white text-gray-800 hover:border-primary"
-                            }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
+            <div role="group" aria-label={t("scenario.presets")} className="flex flex-wrap gap-2.5">
+                {PRESET_KEYS.map((key) => (
+                    <button
+                        key={key}
+                        type="button"
+                        aria-pressed={activePreset === key}
+                        onClick={() => applyPreset(key)}
+                        className={`rounded-control border px-4 py-2.5 text-sm font-semibold transition duration-(--duration-fast) ease-standard ${FOCUS} ${
+                            activePreset === key
+                                ? "border-primary bg-primary-tint text-text-accent"
+                                : "border-border-input bg-surface-raised text-text hover:border-primary"
+                        }`}
+                    >
+                        {t(`scenario.preset.${key}`)}
+                    </button>
+                ))}
+            </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.2fr]">
-                    <section aria-labelledby="scenario-hypothesis-title" className={CARD}>
-                        <h2
-                            id="scenario-hypothesis-title"
-                            className="flex items-center gap-2 text-lg font-semibold text-gray-900"
-                        >
-                            <SlidersHorizontal size={18} className="text-primary" aria-hidden="true" />
-                            Hypothesis
-                        </h2>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.2fr]">
+                <section aria-labelledby="scenario-hypothesis-title" className={CARD}>
+                    <h2 id="scenario-hypothesis-title" className="flex items-center gap-2 text-lg font-semibold text-text">
+                        <SlidersHorizontal size={18} className="text-text-accent" aria-hidden="true" />
+                        {t("scenario.hypothesis")}
+                    </h2>
 
-                        <SliderControl
-                            label="Additional storage capacity"
-                            value={inputs.storageM2}
-                            unit="m²"
-                            limits={SCENARIO_LIMITS.storage}
-                            onChange={(value) => updateInput("storageM2", value)}
-                        />
-                        <SliderControl
-                            label="Additional sensors"
-                            value={inputs.sensors}
-                            unit="sensors"
-                            limits={SCENARIO_LIMITS.sensors}
-                            onChange={(value) => updateInput("sensors", value)}
-                        />
-                        <ToggleControl
-                            label="Cooling upgrade (refrigeration)"
-                            hint="Reduces post-harvest losses by 30% (relative)."
-                            checked={inputs.cooling}
-                            onChange={(value) => updateInput("cooling", value)}
-                        />
-                        <ToggleControl
-                            label="Solar power installation"
-                            hint="Saves ~80% of the annual electricity bill."
-                            checked={inputs.solar}
-                            onChange={(value) => updateInput("solar", value)}
-                        />
+                    <SliderControl
+                        label={t("scenario.inputs.storage")}
+                        value={inputs.storageM2}
+                        unit={t("scenario.units.m2")}
+                        limits={SCENARIO_LIMITS.storage}
+                        onChange={(value) => updateInput("storageM2", value)}
+                    />
+                    <SliderControl
+                        label={t("scenario.inputs.sensors")}
+                        value={inputs.sensors}
+                        unit={t("scenario.units.sensors")}
+                        limits={SCENARIO_LIMITS.sensors}
+                        onChange={(value) => updateInput("sensors", value)}
+                    />
+                    <ToggleControl
+                        label={t("scenario.inputs.cooling")}
+                        hint={t("scenario.inputs.coolingHint")}
+                        checked={inputs.cooling}
+                        onChange={(value) => updateInput("cooling", value)}
+                    />
+                    <ToggleControl
+                        label={t("scenario.inputs.solar")}
+                        hint={t("scenario.inputs.solarHint")}
+                        checked={inputs.solar}
+                        onChange={(value) => updateInput("solar", value)}
+                    />
 
-                        <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                            <h3 className="text-sm font-semibold text-gray-900">Data assumptions</h3>
-                            <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
-                                {[
-                                    ["Storage cost per m²", formatFcfa(A.costPerM2)],
-                                    ["Sensor cost", formatFcfa(A.costPerSensor)],
-                                    ["Mango reference value", `${formatFcfa(A.pricePerTonne)} / t`],
-                                    ["Baseline loss rate", `${A.baseLossPct} %`],
-                                    ["Unmet storage demand", `${A.unmetDemandTonnes} t / year (max)`],
-                                    ["Analysis period", `${A.projectionYears} years`],
-                                ].map(([label, value]) => (
-                                    <div key={label} className="flex justify-between gap-2">
-                                        <dt className="text-gray-500">{label}</dt>
-                                        <dd className="font-semibold text-gray-800">{value}</dd>
+                    <div className="rounded-control border border-border-subtle bg-surface-muted p-3">
+                        <h3 className="text-sm font-semibold text-text">{t("scenario.assumptionsTitle")}</h3>
+                        <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+                            {assumptionRows.map(([key, value]) => (
+                                <div key={key} className="flex justify-between gap-2">
+                                    <dt className="text-text-muted">{t(`scenario.assumptions.${key}`)}</dt>
+                                    <dd className="font-semibold text-text">{value}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                        <details className="mt-3 text-xs">
+                            <summary className={`cursor-pointer font-semibold text-text-accent ${FOCUS}`}>
+                                {t("scenario.allAssumptions")}
+                            </summary>
+                            <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
+                                {allAssumptionRows.map(([key, value]) => (
+                                    <div key={key} className="flex justify-between gap-2">
+                                        <dt className="text-text-muted">{t(`scenario.assumptions.${key}`)}</dt>
+                                        <dd className="text-right font-semibold text-text">{value}</dd>
                                     </div>
                                 ))}
                             </dl>
-                            <details className="mt-3 text-xs">
-                                <summary className={`cursor-pointer font-semibold text-primary ${FOCUS}`}>
-                                    All assumptions used by the formulas
-                                </summary>
-                                <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
-                                    {[
-                                        ["Cooling investment", formatFcfa(A.coolingCost)],
-                                        ["Solar investment", formatFcfa(A.solarCost)],
-                                        ["Added capacity", `${A.tonnesPerM2} t / m²`],
-                                        [
-                                            "Sensor effect",
-                                            `−${A.sensorLossReductionPts} pt each, max ${A.maxEffectiveSensors} effective`,
-                                        ],
-                                        [
-                                            "Cooling effect",
-                                            `−${A.coolingRelativeReduction * 100} % relative on remaining loss`,
-                                        ],
-                                        ["Annual electricity bill", formatFcfa(A.annualElectricity)],
-                                        ["Solar electricity saving", `${A.solarSavingsRate * 100} %`],
-                                        [
-                                            "Reference used surface (fictitious)",
-                                            `${A.baseStorageM2} m²`,
-                                        ],
-                                        ["Margin on used added capacity", `${formatFcfa(A.marginPerTonne)} / t`],
-                                        ["Storage upkeep", `${formatFcfa(A.storageMaintenancePerM2)} / m² / year`],
-                                        ["Sensor upkeep", `${A.sensorMaintenanceRate * 100} % of cost / year`],
-                                        ["Cooling operation", `${formatFcfa(A.coolingOperatingCost)} / year`],
-                                        ["Solar upkeep", `${A.solarMaintenanceRate * 100} % of cost / year`],
-                                    ].map(([label, value]) => (
-                                        <div key={label} className="flex justify-between gap-2">
-                                            <dt className="text-gray-500">{label}</dt>
-                                            <dd className="text-right font-semibold text-gray-800">{value}</dd>
-                                        </div>
-                                    ))}
-                                </dl>
-                            </details>
-                            <p className="mt-3 text-xs text-gray-500">
-                                Annual net benefit equals gross benefit minus operating cost. Break-even
-                                is calculated from the initial investment and the annual net benefit.
-                            </p>
-                            <p className="mt-1 text-xs text-gray-500">
-                                Basis: provisional demonstration assumptions. Validation with operational
-                                farm data is still required.
-                            </p>
+                        </details>
+                        <p className="mt-3 text-xs text-text-muted">{t("scenario.formulaNote")}</p>
+                        <p className="mt-1 text-xs text-text-muted">{t("scenario.basisNote")}</p>
+                    </div>
+                </section>
+
+                <section aria-labelledby="scenario-results-title" className={CARD}>
+                    <h2 id="scenario-results-title" className="flex items-center gap-2 text-lg font-semibold text-text">
+                        <TrendingUp size={18} className="text-text-accent" aria-hidden="true" />
+                        {t("scenario.results")}
+                    </h2>
+
+                    <dl className="flex flex-col gap-2" aria-live="polite">
+                        <ResultRow label={t("scenario.result.investment")} value={formatFcfa(result.investment)} />
+                        <ResultRow label={t("scenario.result.addedCapacity")} value={formatTonnes(result.addedCapacityTonnes)} />
+                        <ResultRow label={t("scenario.result.usedCapacity")} value={formatTonnes(result.usedAddedCapacityTonnes)} />
+                        <ResultRow label={t("scenario.result.lossReduction")} value={formatPoints(result.lossReductionPts, t)} />
+                        <ResultRow label={t("scenario.result.annualCost")} value={formatFcfa(result.annualCost)} />
+                        <ResultRow label={t("scenario.result.grossBenefit")} value={formatFcfa(result.annualGrossBenefit)} />
+                        <ResultRow label={t("scenario.result.netBenefit")} value={formatFcfa(result.annualNetBenefit)} tone={netTone} />
+                        <ResultRow label={t("scenario.result.breakEven")} value={formatBreakEven(result.breakEvenMonths, t)} />
+                        <ResultRow
+                            label={t("scenario.result.fiveYear")}
+                            value={formatFcfa(result.fiveYearNetGain, { signed: true })}
+                            tone={fiveYearTone}
+                        />
+                        <ResultRow label={t("scenario.result.outlook")} value={outlookLabel(result.outlook, t)} tone={outlookTone} />
+                    </dl>
+                    <p className="text-xs text-text-muted">{t("scenario.resultsNote", { value: A.baseLossPct })}</p>
+
+                    <figure className="flex flex-col gap-2">
+                        <figcaption className="text-sm font-semibold text-text">{t("scenario.chart.caption")}</figcaption>
+                        <div className="h-64 w-full" aria-hidden="true">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 16 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-chart-grid)" />
+                                    <XAxis
+                                        dataKey="name"
+                                        tick={{ fontSize: 12, fill: "var(--color-chart-3)" }}
+                                        label={{ value: t("scenario.chart.xAxis"), position: X_LABEL_POSITION, offset: -16, fontSize: 12 }}
+                                    />
+                                    <YAxis
+                                        tickFormatter={(value) => compactFcfa.format(value)}
+                                        tick={{ fontSize: 12, fill: "var(--color-chart-3)" }}
+                                        label={{ value: t("scenario.chart.yAxis"), angle: -90, position: Y_LABEL_POSITION, offset: -8, fontSize: 12 }}
+                                    />
+                                    <Tooltip formatter={(value) => formatFcfa(value)} />
+                                    <Legend verticalAlign="top" height={28} />
+                                    <Bar dataKey="cost" name={t("scenario.chart.cost")} fill="var(--color-chart-5)" radius={[6, 6, 0, 0]} isAnimationActive={false} />
+                                    <Bar dataKey="benefit" name={t("scenario.chart.benefit")} fill="var(--color-chart-1)" radius={[6, 6, 0, 0]} isAnimationActive={false} />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
-                    </section>
-
-                    <section aria-labelledby="scenario-results-title" className={CARD}>
-                        <h2
-                            id="scenario-results-title"
-                            className="flex items-center gap-2 text-lg font-semibold text-gray-900"
-                        >
-                            <TrendingUp size={18} className="text-primary" aria-hidden="true" />
-                            Results
-                        </h2>
-
-                        <dl className="flex flex-col gap-2" aria-live="polite">
-                            <ResultRow label="Initial investment" value={formatFcfa(result.investment)} />
-                            <ResultRow
-                                label="Additional capacity"
-                                value={formatTonnes(result.addedCapacityTonnes)}
-                            />
-                            <ResultRow
-                                label="Expected capacity used"
-                                value={formatTonnes(result.usedAddedCapacityTonnes)}
-                            />
-                            <ResultRow
-                                label="Estimated loss reduction"
-                                value={formatPoints(result.lossReductionPts)}
-                            />
-                            <ResultRow label="Annual operating cost" value={formatFcfa(result.annualCost)} />
-                            <ResultRow
-                                label="Annual gross benefit"
-                                value={formatFcfa(result.annualGrossBenefit)}
-                            />
-                            <ResultRow
-                                label="Annual net benefit"
-                                value={formatFcfa(result.annualNetBenefit)}
-                                tone={netTone}
-                            />
-                            <ResultRow
-                                label="Break-even point"
-                                value={formatBreakEven(result.breakEvenMonths)}
-                            />
-                            <ResultRow
-                                label="Net gain after 5 years"
-                                value={formatFcfa(result.fiveYearNetGain, { signed: true })}
-                                tone={fiveYearTone}
-                            />
-                            <ResultRow
-                                label="Financial outlook"
-                                value={OUTLOOK_LABELS[result.outlook]}
-                                tone={outlookTone}
-                            />
-                        </dl>
-                        <p className="text-xs text-gray-500">
-                            Results are calculated from the assumptions shown in the Hypothesis panel.
-                            Loss reduction is in percentage points of the {A.baseLossPct} % baseline.
-                        </p>
-
-                        <figure className="flex flex-col gap-2">
-                            <figcaption className="text-sm font-semibold text-gray-900">
-                                Cumulative cost vs cumulative benefit (FCFA)
-                            </figcaption>
-                            <div className="h-64 w-full" aria-hidden="true">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 24, left: 16 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                        <XAxis
-                                            dataKey="name"
-                                            tick={{ fontSize: 12 }}
-                                            label={{ value: "Projection year", position: "insideBottom", offset: -16, fontSize: 12 }}
-                                        />
-                                        <YAxis
-                                            tickFormatter={(value) => compactFcfa.format(value)}
-                                            tick={{ fontSize: 12 }}
-                                            label={{
-                                                value: "Cumulative amount (FCFA)",
-                                                angle: -90,
-                                                position: "insideLeft",
-                                                offset: -8,
-                                                fontSize: 12,
-                                            }}
-                                        />
-                                        <Tooltip formatter={(value) => formatFcfa(value)} />
-                                        <Legend verticalAlign="top" height={28} />
-                                        <Bar dataKey="cost" name="Cumulative cost" fill="#c1503f" radius={[6, 6, 0, 0]} isAnimationActive={false} />
-                                        <Bar dataKey="benefit" name="Cumulative benefit" fill="#2e9e6b" radius={[6, 6, 0, 0]} isAnimationActive={false} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <details className="text-xs" open>
-                                <summary className={`cursor-pointer font-semibold text-primary ${FOCUS}`}>
-                                    Chart values as a table
-                                </summary>
-                                <div className="mt-2 overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <caption className="sr-only">
-                                            Cumulative cost, benefit and net gain per projection year, in FCFA
-                                        </caption>
-                                        <thead>
-                                            <tr className="border-b border-gray-100 text-gray-500">
-                                                <th scope="col" className="py-1 pr-3 font-semibold">Year</th>
-                                                <th scope="col" className="py-1 pr-3 text-right font-semibold">Cumulative cost</th>
-                                                <th scope="col" className="py-1 pr-3 text-right font-semibold">Cumulative benefit</th>
-                                                <th scope="col" className="py-1 text-right font-semibold">Cumulative net</th>
+                        <details className="text-xs" open>
+                            <summary className={`cursor-pointer font-semibold text-text-accent ${FOCUS}`}>{t("scenario.chart.asTable")}</summary>
+                            <div className="mt-2 overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <caption className="sr-only">{t("scenario.chart.tableCaption")}</caption>
+                                    <thead>
+                                        <tr className="border-b border-border-divider text-text-muted">
+                                            <th scope="col" className="py-1 pr-3 font-semibold">{t("scenario.chart.yearColumn")}</th>
+                                            <th scope="col" className="py-1 pr-3 text-right font-semibold">{t("scenario.chart.cost")}</th>
+                                            <th scope="col" className="py-1 pr-3 text-right font-semibold">{t("scenario.chart.benefit")}</th>
+                                            <th scope="col" className="py-1 text-right font-semibold">{t("scenario.chart.net")}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {result.projection.map((row) => (
+                                            <tr key={row.year} className="border-b border-border-subtle">
+                                                <th scope="row" className="py-1 pr-3 font-medium text-text">
+                                                    {t("scenario.year", { year: row.year })}
+                                                </th>
+                                                <td className="py-1 pr-3 text-right tabular-nums">{formatFcfa(row.cumulativeCost)}</td>
+                                                <td className="py-1 pr-3 text-right tabular-nums">{formatFcfa(row.cumulativeBenefit)}</td>
+                                                <td className="py-1 text-right tabular-nums">{formatFcfa(row.cumulativeNet, { signed: true })}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {result.projection.map((row) => (
-                                                <tr key={row.year} className="border-b border-gray-50">
-                                                    <th scope="row" className="py-1 pr-3 font-medium text-gray-700">
-                                                        Year {row.year}
-                                                    </th>
-                                                    <td className="py-1 pr-3 text-right tabular-nums">{formatFcfa(row.cumulativeCost)}</td>
-                                                    <td className="py-1 pr-3 text-right tabular-nums">{formatFcfa(row.cumulativeBenefit)}</td>
-                                                    <td className="py-1 text-right tabular-nums">
-                                                        {formatFcfa(row.cumulativeNet, { signed: true })}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </details>
-                        </figure>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                    </figure>
 
-                        <button
-                            type="button"
-                            onClick={() => setSummary(buildScenarioSummary(result))}
-                            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 ${FOCUS}`}
-                        >
-                            <FileText size={16} aria-hidden="true" />
-                            Show summary
-                        </button>
-                        <p className="-mt-2 text-center text-xs text-gray-400">
-                            Displays a temporary on-screen summary; no file is downloaded.
-                        </p>
-                        <div role="status" aria-live="polite" aria-label="Scenario summary">
-                            {summary && (
-                                <p className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-gray-800">
-                                    <span className="font-semibold">Summary (simulation)</span> — {summary}
-                                </p>
-                            )}
-                        </div>
-                    </section>
-                </div>
+                    <Button variant="secondary" icon={FileText} fullWidth onClick={() => setSummary(buildScenarioSummary(result, t))}>
+                        {t("scenario.summary.show")}
+                    </Button>
+                    <p className="-mt-2 text-center text-xs text-text-muted">{t("scenario.summary.note")}</p>
+                    <div role="status" aria-live="polite" aria-label={t("scenario.summary.label")}>
+                        {summary && (
+                            <p className="rounded-control bg-primary-tint p-3 text-sm text-text">
+                                <span className="font-semibold">{t("scenario.summary.title")}</span> — {summary}
+                            </p>
+                        )}
+                    </div>
+                </section>
             </div>
         </div>
     );

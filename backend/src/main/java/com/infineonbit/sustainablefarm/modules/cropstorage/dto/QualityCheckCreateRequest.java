@@ -14,7 +14,7 @@ public record QualityCheckCreateRequest(
         @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal moisturePercent,
         String qualityGrade,
         @NotNull Boolean passed,
-        String inspector,
+        Long inspectorPersonId,
         String notes,
         @NotNull LocalDateTime checkedAt) {
 
@@ -24,7 +24,7 @@ public record QualityCheckCreateRequest(
         check.setMoisturePercent(moisturePercent);
         check.setQualityGrade(qualityGrade);
         check.setPassed(passed);
-        check.setInspector(inspector);
+        check.setInspectorPersonId(inspectorPersonId);
         check.setNotes(notes);
         check.setCheckedAt(checkedAt);
         return check;

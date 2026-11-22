@@ -1,5 +1,13 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.ValuationSummary;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.MovementType;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropProductType;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.OperationalStatus;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.core.exception.ResourceNotFoundException;
@@ -25,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -99,6 +106,8 @@ class CropStorageBusinessRulesJpaTest {
     @Autowired private SensorRepository sensors;
     @Autowired private SensorReadingRepository readings;
     @Autowired private AlertRepository alerts;
+    // Plants and staff are other modules: their lookups are mocked here.
+    @MockitoBean private SharedReferences sharedReferences;
 
     @BeforeEach
     void assertIsolatedDatabase() throws SQLException {
@@ -140,7 +149,7 @@ class CropStorageBusinessRulesJpaTest {
 
         List<StockMovement> moves = movements.findByBatchIdOrderByMovedAtDesc(batch.getId());
         assertEquals(1, moves.size());
-        assertEquals("IN", moves.get(0).getType());
+        assertEquals(MovementType.IN, moves.get(0).getType());
         assertEquals(0, new BigDecimal("25.50").compareTo(moves.get(0).getQuantityKg()));
         assertEquals(zone.getId(), moves.get(0).getToZone().getId());
         assertTrue(moves.get(0).getReason().contains("PKG-PT-1"));
@@ -206,7 +215,7 @@ class CropStorageBusinessRulesJpaTest {
         StorageZone zone = zone("1000");
         StockMovementRepository failing = mock(StockMovementRepository.class);
         when(failing.save(any())).thenThrow(new IllegalStateException("simulated failure"));
-        StorageEntryService service = new StorageEntryService(batches, zones, failing);
+        StorageEntryService service = new StorageEntryService(batches, zones, failing, sharedReferences);
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
 
         assertThrows(IllegalStateException.class, () -> tx.executeWithoutResult(status ->
@@ -297,9 +306,13 @@ class CropStorageBusinessRulesJpaTest {
     }
 
     @Test
-    void unknownMovementTypeAndTransferWithoutDestinationAreRefused() {
+    void movementWithoutTypeAndTransferWithoutDestinationAreRefused() {
+        // An unknown type name never reaches the service: the enum makes it a 400
+        // (CropStorageCreateControllerTest); a missing one is refused here.
         CropStorageBatch batch = batch(zone("100"), "10", 0, LocalDate.now());
-        assertThrows(BusinessRuleException.class, () -> movementService.create(move("LOST", "1", batch, null)));
+        StockMovement untyped = move("OUT", "1", batch, null);
+        untyped.setType(null);
+        assertThrows(BusinessRuleException.class, () -> movementService.create(untyped));
         assertThrows(BusinessRuleException.class, () -> movementService.create(move("TRANSFER", "1", batch, null)));
         assertEquals(0, movements.count());
     }
@@ -323,21 +336,21 @@ class CropStorageBusinessRulesJpaTest {
     void summaryValuesCurrentStockInEveryReportingUnit() {
         StorageZone zone = zone("10000");
         CropStorageBatch valued = batch(zone, "1000", 0, LocalDate.now());
-        // value_per_kg_fcfa is stored with 2 decimals (precision 12, scale 2).
-        valued.setValuePerKgFcfa(new BigDecimal("600.00"));
+        // The value per kg is stored as Money with 2 decimals, in XOF.
+        valued.setValuePerKg(Money.of("600.00", CurrencyCode.XOF));
         batches.save(valued);
         batch(zone, "500", 0, LocalDate.now()); // no value: contributes kg, not FCFA
 
-        Map<String, Object> summary = batchService.summary();
+        ValuationSummary summary = batchService.summary();
 
-        assertEquals(0, new BigDecimal("1500").compareTo((BigDecimal) summary.get("totalKg")));
-        assertEquals(0, new BigDecimal("1.500").compareTo((BigDecimal) summary.get("totalTonnes")));
-        assertEquals(0, new BigDecimal("3306.937").compareTo((BigDecimal) summary.get("totalLb")));
-        assertEquals(0, new BigDecimal("2.143").compareTo((BigDecimal) summary.get("totalM3")));
+        assertEquals(0, new BigDecimal("1500").compareTo(summary.totalKg()));
+        assertEquals(0, new BigDecimal("1.500").compareTo(summary.totalTonnes()));
+        assertEquals(0, new BigDecimal("3306.937").compareTo(summary.totalLb()));
+        assertEquals(0, new BigDecimal("2.143").compareTo(summary.totalM3()));
         // EUR: fixed peg 655.957; USD: HYPOTHESIS rate 600 FCFA, as documented in the service.
-        assertEquals(0, new BigDecimal("600000").compareTo((BigDecimal) summary.get("totalValueFcfa")));
-        assertEquals(0, new BigDecimal("914.69").compareTo((BigDecimal) summary.get("totalValueEur")));
-        assertEquals(0, new BigDecimal("1000.00").compareTo((BigDecimal) summary.get("totalValueUsd")));
+        assertEquals(0, new BigDecimal("600000").compareTo(summary.totalValueFcfa()));
+        assertEquals(0, new BigDecimal("914.69").compareTo(summary.totalValueEur()));
+        assertEquals(0, new BigDecimal("1000.00").compareTo(summary.totalValueUsd()));
     }
 
     // ---------- Alerts ----------
@@ -385,8 +398,9 @@ class CropStorageBusinessRulesJpaTest {
                     key = "ok";
                 } catch (java.util.concurrent.ExecutionException e) {
                     Throwable cause = e.getCause();
-                    key = cause instanceof ConflictException || cause instanceof DataIntegrityViolationException
-                            ? "conflict" : cause.getClass().getSimpleName();
+                    // Only the service's ConflictException counts: a raw constraint
+                    // violation leaking out of the service would fail the test.
+                    key = cause instanceof ConflictException ? "conflict" : cause.getClass().getSimpleName();
                 }
                 outcomes.merge(key, 1, Integer::sum);
             }
@@ -410,17 +424,17 @@ class CropStorageBusinessRulesJpaTest {
         StorageZone zone = new StorageZone();
         zone.setZoneCode("Z-" + SEQ.incrementAndGet());
         zone.setCapacityKg(new BigDecimal(capacityKg));
-        zone.setStatus("ACTIVE");
+        zone.setStatus(OperationalStatus.ACTIVE);
         return zones.save(zone);
     }
 
     private CropStorageBatch batch(StorageZone zone, String kg, int priority, LocalDate entryDate) {
         CropStorageBatch batch = new CropStorageBatch();
         batch.setBatchCode("B-" + SEQ.incrementAndGet());
-        batch.setProductType("DRIED_MANGO");
+        batch.setProductType(CropProductType.DRIED_MANGO);
         batch.setInitialQuantityKg(new BigDecimal(kg));
         batch.setCurrentQuantityKg(new BigDecimal(kg));
-        batch.setStatus("STORED");
+        batch.setStatus(BatchStatus.STORED);
         batch.setCustomerPriority(priority);
         batch.setStorageEntryDate(entryDate);
         batch.setStorageZone(zone);
@@ -429,7 +443,7 @@ class CropStorageBusinessRulesJpaTest {
 
     private static StockMovement move(String type, String kg, CropStorageBatch batch, StorageZone toZone) {
         StockMovement movement = new StockMovement();
-        movement.setType(type);
+        movement.setType(MovementType.valueOf(type));
         movement.setQuantityKg(new BigDecimal(kg));
         CropStorageBatch ref = new CropStorageBatch();
         ref.setId(batch.getId());
@@ -446,7 +460,7 @@ class CropStorageBusinessRulesJpaTest {
     private Sensor sensor(StorageZone zone) {
         Sensor sensor = new Sensor();
         sensor.setSensorCode("S-" + SEQ.incrementAndGet());
-        sensor.setStatus("ACTIVE");
+        sensor.setStatus(OperationalStatus.ACTIVE);
         sensor.setStorageZone(zone);
         return sensors.save(sensor);
     }

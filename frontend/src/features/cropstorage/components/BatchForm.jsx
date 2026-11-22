@@ -1,9 +1,14 @@
 import { useState } from "react";
-import CropStorageField from "./CropStorageField";
+import { useTranslation } from "react-i18next";
+import { Button, Card, Field, Input, OwnedResourceSelect, Select } from "../../../shared/ui";
+import { OWNER_LINKS } from "../../../app/ownerLinks";
+import { BATCH_STATUSES, GROUP, PRODUCT_STAGES, PRODUCT_TYPES, enumOptions } from "../utils/enums";
+import { toBatchPayload } from "../utils/batchPayload";
+import FormMessage from "./FormMessage";
 
 const INITIAL_VALUES = {
     batchCode: "",
-    productType: "",
+    productType: "DRIED_MANGO",
     productStage: "",
     origin: "",
     supplierId: "",
@@ -17,7 +22,7 @@ const INITIAL_VALUES = {
     currentQuantityKg: "",
     moisturePercent: "",
     qualityGrade: "",
-    status: "",
+    status: "STORED",
     storageZoneId: "",
     expectedDispatchDate: "",
     expiryDate: "",
@@ -25,66 +30,47 @@ const INITIAL_VALUES = {
     valuePerKgFcfa: "",
 };
 
-const FIELD_DEFINITIONS = [
-    { name: "batchCode", label: "Batch code", required: true },
-    { name: "productType", label: "Product type", required: true },
-    { name: "productStage", label: "Product stage" },
-    { name: "origin", label: "Origin" },
-    { name: "supplierId", label: "Supplier", options: [] },
-    { name: "mangoVariety", label: "Mango variety" },
-    { name: "harvestDate", label: "Harvest date", type: "date" },
-    { name: "harvestId", label: "Harvest ID", type: "number", min: "1", step: "1" },
-    { name: "processingDate", label: "Processing date", type: "date" },
-    { name: "packagingDate", label: "Packaging date", type: "date" },
-    { name: "storageEntryDate", label: "Storage entry date", type: "date" },
-    { name: "initialQuantityKg", label: "Initial quantity (kg)", type: "number", min: "0", step: "0.01", required: true },
-    { name: "currentQuantityKg", label: "Current quantity (kg)", type: "number", min: "0", step: "0.01" },
-    { name: "moisturePercent", label: "Moisture (%)", type: "number", min: "0", max: "100", step: "0.01" },
-    { name: "qualityGrade", label: "Quality grade" },
-    { name: "status", label: "Status", required: true },
-    { name: "storageZoneId", label: "Storage zone", options: [] },
-    { name: "expectedDispatchDate", label: "Expected dispatch date", type: "date" },
-    { name: "expiryDate", label: "Expiry date", type: "date" },
-    { name: "customerPriority", label: "Customer priority", type: "number", min: "0", step: "1" },
-    { name: "valuePerKgFcfa", label: "Value per kg (FCFA)", type: "number", min: "0", step: "0.01" },
+const NUMBER = "number";
+const DATE = "date";
+
+// Fields of the form, in display order. `kind` picks the control; enums use the backend values.
+const FIELDS = [
+    { name: "batchCode", required: true },
+    { name: "productType", kind: "enum", group: GROUP.productType, values: PRODUCT_TYPES, required: true },
+    { name: "productStage", kind: "enum", group: GROUP.productStage, values: PRODUCT_STAGES, optional: true },
+    { name: "status", kind: "enum", group: GROUP.batchStatus, values: BATCH_STATUSES, required: true },
+    { name: "mangoVariety", kind: "variety" },
+    { name: "origin" },
+    { name: "supplierId", kind: "supplier" },
+    { name: "storageZoneId", kind: "zone" },
+    { name: "initialQuantityKg", props: { type: NUMBER, min: "0", step: "0.01" }, required: true },
+    { name: "currentQuantityKg", props: { type: NUMBER, min: "0", step: "0.01" } },
+    { name: "moisturePercent", props: { type: NUMBER, min: "0", max: "100", step: "0.01" } },
+    { name: "qualityGrade" },
+    { name: "harvestId", props: { type: NUMBER, min: "1", step: "1" } },
+    { name: "harvestDate", props: { type: DATE } },
+    { name: "processingDate", props: { type: DATE } },
+    { name: "packagingDate", props: { type: DATE } },
+    { name: "storageEntryDate", props: { type: DATE } },
+    { name: "expectedDispatchDate", props: { type: DATE } },
+    { name: "expiryDate", props: { type: DATE } },
+    { name: "customerPriority", props: { type: NUMBER, min: "0", step: "1" } },
+    { name: "valuePerKgFcfa", props: { type: NUMBER, min: "0", step: "0.01" } },
 ];
 
-const NUMERIC_FIELDS = [
-    "harvestId",
-    "initialQuantityKg",
-    "currentQuantityKg",
-    "moisturePercent",
-    "customerPriority",
-    "valuePerKgFcfa",
-];
-
-const OPTIONAL_FIELDS = [
-    "productStage",
-    "origin",
-    "supplierId",
-    "mangoVariety",
-    "harvestDate",
-    "harvestId",
-    "processingDate",
-    "packagingDate",
-    "storageEntryDate",
-    "currentQuantityKg",
-    "moisturePercent",
-    "qualityGrade",
-    "storageZoneId",
-    "expectedDispatchDate",
-    "expiryDate",
-    "valuePerKgFcfa",
-];
-
+/** The API answers field errors by request field name; supplier and zone are nested references. */
 function fieldError(errors, name) {
-    const snakeName = name.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-    return errors?.[name] ?? errors?.[snakeName];
+    const aliases = { supplierId: ["supplier", "supplier.id"], storageZoneId: ["storageZone", "storageZone.id"] };
+    for (const key of [name, ...(aliases[name] ?? [])]) {
+        if (errors?.[key]) return errors[key];
+    }
+    return undefined;
 }
 
 export default function BatchForm({
     zones,
     suppliers,
+    varieties,
     isSubmitting,
     fieldErrors,
     submitError,
@@ -92,79 +78,85 @@ export default function BatchForm({
     onSubmit,
     onClearError,
 }) {
+    const { t } = useTranslation("cropstorage");
     const [values, setValues] = useState(INITIAL_VALUES);
-    const optionsByField = {
-        supplierId: suppliers.map((supplier) => ({
-            value: supplier.id,
-            label: supplier.name ?? supplier.companyName ?? supplier.id,
-        })),
-        storageZoneId: zones.map((zone) => ({
-            value: zone.id,
-            label: zone.name ? `${zone.zoneCode ?? zone.code} — ${zone.name}` : zone.zoneCode ?? zone.code,
-        })),
-    };
 
     function update(name, value) {
         setValues((current) => ({ ...current, [name]: value }));
         onClearError();
     }
 
-    function handleSubmit(event) {
-        event.preventDefault();
-        const payload = { ...values };
-        for (const name of OPTIONAL_FIELDS) {
-            if (payload[name] === "") payload[name] = null;
+    const zoneOptions = zones.map((zone) => ({
+        value: String(zone.id),
+        label: zone.name ? `${zone.zoneCode} — ${zone.name}` : zone.zoneCode,
+    }));
+    const supplierOptions = suppliers.map((supplier) => ({ value: String(supplier.id), label: supplier.name }));
+
+    function selectField(field, options) {
+        return (
+            <Field key={field.name} label={t(`batches.form.${field.name}`)} required={field.required} error={fieldError(fieldErrors, field.name)}>
+                <Select value={values[field.name]} onChange={(event) => update(field.name, event.target.value)} required={field.required}>
+                    {field.optional !== false && !field.required && <option value="">{t("form.none")}</option>}
+                    {options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </Select>
+            </Field>
+        );
+    }
+
+    function renderField(field) {
+        if (field.kind === "enum") return selectField(field, enumOptions(t, field.group, field.values));
+        if (field.kind === "supplier") return selectField(field, supplierOptions);
+        if (field.kind === "zone") return selectField(field, zoneOptions);
+        if (field.kind === "variety") {
+            return (
+                <OwnedResourceSelect
+                    key={field.name}
+                    label={t("batches.form.mangoVariety")}
+                    value={values.mangoVariety}
+                    onChange={(value) => update("mangoVariety", value)}
+                    options={varieties.data ?? []}
+                    getOptionValue={(variety) => variety.varietyName}
+                    getOptionLabel={(variety) => variety.varietyName}
+                    loading={varieties.isPending}
+                    loadError={varieties.isError ? t("batches.form.varietiesError") : undefined}
+                    onRetry={varieties.refetch}
+                    owner={OWNER_LINKS.variety}
+                    error={fieldError(fieldErrors, "mangoVariety")}
+                />
+            );
         }
-        for (const name of NUMERIC_FIELDS) {
-            if (payload[name] !== "" && payload[name] !== null) payload[name] = Number(payload[name]);
-        }
-        payload.batchCode = payload.batchCode.trim();
-        payload.productType = payload.productType.trim();
-        payload.status = payload.status.trim();
-        for (const name of ["productStage", "origin", "mangoVariety", "qualityGrade"]) {
-            if (payload[name] === "") payload[name] = null;
-            else if (payload[name] !== null) payload[name] = payload[name].trim();
-        }
-        onSubmit(payload);
+        return (
+            <Field key={field.name} label={t(`batches.form.${field.name}`)} required={field.required} error={fieldError(fieldErrors, field.name)}>
+                <Input
+                    value={values[field.name]}
+                    onChange={(event) => update(field.name, event.target.value)}
+                    required={field.required}
+                    {...field.props}
+                />
+            </Field>
+        );
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-xl border border-gray-200 bg-white p-5"
-        >
-            <h2 className="font-heading text-lg font-semibold text-gray-900">Create batch</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {FIELD_DEFINITIONS.map(({ name, label, options, ...props }) => (
-                    <CropStorageField
-                        key={name}
-                        id={`batch-${name}`}
-                        label={label}
-                        value={values[name]}
-                        options={options ? optionsByField[name] : undefined}
-                        onChange={(event) => update(name, event.target.value)}
-                        error={fieldError(fieldErrors, name)}
-                        {...props}
-                    />
-                ))}
-            </div>
-            {submitError && (
-                <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
-            {success && (
-                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
-                    Batch created successfully.
-                </p>
-            )}
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+        <Card title={t("batches.form.title")}>
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    onSubmit(toBatchPayload(values));
+                }}
             >
-                {isSubmitting ? "Creating…" : "Create batch"}
-            </button>
-        </form>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{FIELDS.map(renderField)}</div>
+                <FormMessage error={submitError} success={success ? t("batches.form.success") : null} />
+                <div className="mt-4">
+                    <Button type="submit" loading={isSubmitting}>
+                        {t("batches.form.submit")}
+                    </Button>
+                </div>
+            </form>
+        </Card>
     );
 }

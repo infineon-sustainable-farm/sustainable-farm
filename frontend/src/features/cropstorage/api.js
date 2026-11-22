@@ -140,6 +140,11 @@ export function fetchQualityChecks() {
     return apiClient.get(ENDPOINTS.QUALITY_CHECKS);
 }
 
+/** The variety catalogue of Plants (owner of the concept): `{ varietyKey, varietyName, ... }`. */
+export function fetchVarieties() {
+    return apiClient.get("/api/plants/variety-references");
+}
+
 export function fetchQualityChecksByBatch(batchId) {
     return apiClient.get(`${ENDPOINTS.QUALITY_CHECKS}/batch/${encodeURIComponent(batchId)}`);
 }

@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.AlertResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.AlertCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.AlertService;
 import jakarta.validation.Valid;
@@ -28,6 +29,7 @@ import java.util.List;
 public class AlertController {
 
     private final AlertService alertService;
+    private final CropStorageMapper mapper;
 
     /**
      * Creates a manual alert; threshold-crossing alerts are created
@@ -37,8 +39,8 @@ public class AlertController {
      * @return the saved alert
      */
     @PostMapping
-    public Alert create(@Valid @RequestBody AlertCreateRequest request) {
-        return alertService.create(request.toEntity());
+    public AlertResponse create(@Valid @RequestBody AlertCreateRequest request) {
+        return mapper.alert(alertService.create(request.toEntity()));
     }
 
     /**
@@ -47,8 +49,8 @@ public class AlertController {
      * @return all alerts
      */
     @GetMapping
-    public List<Alert> findAll() {
-        return alertService.findAll();
+    public List<AlertResponse> findAll() {
+        return CropStorageMapper.all(alertService.findAll(), mapper::alert);
     }
 
     /**
@@ -59,8 +61,8 @@ public class AlertController {
      * @return alerts in that status
      */
     @GetMapping("/status/{status}")
-    public List<Alert> findByStatus(@PathVariable String status) {
-        return alertService.findByStatus(status);
+    public List<AlertResponse> findByStatus(@PathVariable String status) {
+        return CropStorageMapper.all(alertService.findByStatus(status), mapper::alert);
     }
 
     /**
@@ -70,8 +72,8 @@ public class AlertController {
      * @return the acknowledged alert
      */
     @PatchMapping("/{id}/acknowledge")
-    public Alert acknowledge(@PathVariable Long id) {
-        return alertService.updateStatus(id, "ACKNOWLEDGED");
+    public AlertResponse acknowledge(@PathVariable Long id) {
+        return mapper.alert(alertService.updateStatus(id, "ACKNOWLEDGED"));
     }
 
     /**
@@ -81,7 +83,7 @@ public class AlertController {
      * @return the resolved alert
      */
     @PatchMapping("/{id}/resolve")
-    public Alert resolve(@PathVariable Long id) {
-        return alertService.updateStatus(id, "RESOLVED");
+    public AlertResponse resolve(@PathVariable Long id) {
+        return mapper.alert(alertService.updateStatus(id, "RESOLVED"));
     }
 }

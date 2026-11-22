@@ -1,27 +1,19 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
-
+/** Who delivered a batch to the store when it does not come from the farm itself. */
 @Entity
 @Table(name = "supplier")
 @Getter
 @Setter
-public class Supplier {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Supplier extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false, unique = true)
@@ -34,8 +26,4 @@ public class Supplier {
     private String region;
 
     private String contactPhone;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
 }

@@ -15,6 +15,7 @@ public class QualityCheckService {
 
     private final QualityCheckRepository qualityCheckRepository;
     private final CropStorageBatchRepository batchRepository;
+    private final SharedReferences sharedReferences;
 
     /**
      * Saves a quality check; the batch arriving as a bare-id shell would be
@@ -22,6 +23,7 @@ public class QualityCheckService {
      * attached first, with a 404 if the id is unknown.
      */
     public QualityCheck create(QualityCheck check) {
+        sharedReferences.requirePerson(check.getInspectorPersonId());
         if (check.getBatch() != null && check.getBatch().getId() != null) {
             check.setBatch(batchRepository.findWithRelationshipsById(check.getBatch().getId())
                     .orElseThrow(() -> new ResourceNotFoundException(

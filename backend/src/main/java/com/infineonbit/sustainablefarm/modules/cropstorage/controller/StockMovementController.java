@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.MovementResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StockMovementCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.StockMovementService;
 import jakarta.validation.Valid;
@@ -20,19 +21,20 @@ import java.util.List;
 public class StockMovementController {
 
     private final StockMovementService stockMovementService;
+    private final CropStorageMapper mapper;
 
     @PostMapping
-    public StockMovement create(@Valid @RequestBody StockMovementCreateRequest request) {
-        return stockMovementService.create(request.toEntity());
+    public MovementResponse create(@Valid @RequestBody StockMovementCreateRequest request) {
+        return mapper.movement(stockMovementService.create(request.toEntity()));
     }
 
     @GetMapping
-    public List<StockMovement> findAll() {
-        return stockMovementService.findAll();
+    public List<MovementResponse> findAll() {
+        return CropStorageMapper.all(stockMovementService.findAll(), mapper::movement);
     }
 
     @GetMapping("/batch/{batchId}")
-    public List<StockMovement> findByBatch(@PathVariable Long batchId) {
-        return stockMovementService.findByBatch(batchId);
+    public List<MovementResponse> findByBatch(@PathVariable Long batchId) {
+        return CropStorageMapper.all(stockMovementService.findByBatch(batchId), mapper::movement);
     }
 }

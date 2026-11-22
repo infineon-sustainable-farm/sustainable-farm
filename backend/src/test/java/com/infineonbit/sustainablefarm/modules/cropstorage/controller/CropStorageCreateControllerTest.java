@@ -1,5 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
+import com.infineonbit.sustainablefarm.modules.staff.api.PersonDirectory;
+import com.infineonbit.sustainablefarm.modules.plants.api.VarietyCatalog;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.core.exception.CoreExceptionHandler;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
@@ -48,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         StorageZoneController.class,
         SupplierController.class
 })
-@Import(CoreExceptionHandler.class)
+@Import({CoreExceptionHandler.class, CropStorageMapper.class})
 class CropStorageCreateControllerTest {
 
     @Autowired
@@ -80,6 +83,13 @@ class CropStorageCreateControllerTest {
 
     @MockitoBean
     private SupplierService supplierService;
+
+    // Read by the response mapper for names of shared concepts (other modules).
+    @MockitoBean
+    private VarietyCatalog varietyCatalog;
+
+    @MockitoBean
+    private PersonDirectory personDirectory;
 
     @Test
     void createAlertIgnoresEntityAndNestedServerFields() throws Exception {
@@ -113,14 +123,14 @@ class CropStorageCreateControllerTest {
 
     @Test
     void createBatchIgnoresEntityVersionAndNestedServerFields() throws Exception {
-        when(batchService.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(batchService.create(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         mockMvc.perform(post("/api/crop-storage/batches")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"id":91,"version":55,"createdAt":"2000-01-01T00:00:00",
                                  "updatedAt":"2000-01-01T00:00:00","batchCode":"B-1",
-                                 "productType":"MANGO","initialQuantityKg":10,"status":"STORED",
+                                 "productType":"DRIED_MANGO","initialQuantityKg":10,"status":"STORED",
                                  "supplier":{"id":5,"name":"overposted","createdAt":"2000-01-01T00:00:00"},
                                  "storageZone":{"id":6,"zoneCode":"overposted","capacityKg":999}}
                                 """))
@@ -128,7 +138,7 @@ class CropStorageCreateControllerTest {
                 .andExpect(jsonPath("$.batchCode").value("B-1"));
 
         var captor = org.mockito.ArgumentCaptor.forClass(CropStorageBatch.class);
-        verify(batchService).create(captor.capture());
+        verify(batchService).create(captor.capture(), any());
         CropStorageBatch saved = captor.getValue();
         assertNull(saved.getId());
         assertNull(saved.getVersion());
@@ -303,13 +313,13 @@ class CropStorageCreateControllerTest {
         mockMvc.perform(post("/api/crop-storage/batches")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"batchCode":"B-1","productType":"MANGO",
+                                {"batchCode":"B-1","productType":"DRIED_MANGO",
                                  "initialQuantityKg":-1,"status":"STORED"}
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors.initialQuantityKg").exists());
 
-        verify(batchService, never()).create(any());
+        verify(batchService, never()).create(any(), any());
     }
 
     @Test
@@ -322,5 +332,25 @@ class CropStorageCreateControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(sensorReadingService, never()).create(any());
+    }
+
+    @Test
+    void anUnknownStatusOrTypeValueIsABadRequest() throws Exception {
+        mockMvc.perform(post("/api/crop-storage/storage-zones")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"zoneCode":"Z-1","capacityKg":100,"status":"OPEN"}
+                                """))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/crop-storage/stock-movements")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"type":"SIDEWAYS","quantityKg":2,"batch":{"id":7},
+                                 "movedAt":"2026-10-30T10:00:00"}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        verify(storageZoneService, never()).create(any());
+        verify(stockMovementService, never()).create(any());
     }
 }

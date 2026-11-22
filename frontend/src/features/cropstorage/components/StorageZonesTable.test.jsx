@@ -7,10 +7,10 @@ afterEach(cleanup);
 
 describe("storage zones table capacity usage", () => {
     it.each([
-        [69.999, "69.999%", "rgb(22, 163, 74)"],
-        [70, "70%", "rgb(245, 158, 11)"],
-        [90, "90%", "rgb(245, 158, 11)"],
-        [90.004, "90.004%", "rgb(239, 68, 68)"],
+        [69.999, "69.999%", "bg-success-fg"],
+        [70, "70%", "bg-warning-fg"],
+        [90, "90%", "bg-warning-fg"],
+        [90.004, "90.004%", "bg-error-fg"],
     ])("displays %s%% with the matching threshold color", (usedPercent, label, color) => {
         render(
             <StorageZonesTable
@@ -30,6 +30,6 @@ describe("storage zones table capacity usage", () => {
         expect(screen.getByText(label)).toBeTruthy();
         const progress = screen.getByRole("progressbar", { name: "A capacity used" });
         expect(progress.getAttribute("aria-valuetext")).toBe(`${label} used`);
-        expect(progress.firstElementChild.style.background).toBe(color);
+        expect(progress.firstElementChild.className).toContain(color);
     });
 });

@@ -31,7 +31,7 @@ describe("storage capacity gauge", () => {
 
         expect(screen.getAllByText("—").length).toBeGreaterThan(0);
         const gauge = screen.getByRole("img", { name: "Overall storage usage unavailable" });
-        expect(gauge.children[1].getAttribute("stroke")).toBe("#dbe4ec");
+        expect(gauge.children[1].getAttribute("stroke")).toBe("var(--color-border-subtle)");
         const progress = screen.getByRole("progressbar", { name: "Zone A capacity" });
         if (
             usedKg == null ||
@@ -41,7 +41,7 @@ describe("storage capacity gauge", () => {
         ) {
             expect(progress.hasAttribute("aria-valuenow")).toBe(false);
             expect(progress.getAttribute("aria-valuetext")).toBe("Usage unavailable");
-            expect(progress.firstElementChild.style.background).toBe("rgb(219, 228, 236)");
+            expect(progress.firstElementChild.className).toContain("bg-border-subtle");
         }
     });
 
@@ -70,30 +70,30 @@ describe("storage capacity gauge", () => {
     });
 
     it.each([
-        [53.67, "rgb(22, 163, 74)"],
-        [70, "rgb(245, 158, 11)"],
-        [90, "rgb(245, 158, 11)"],
-        [95, "rgb(239, 68, 68)"],
+        [53.67, "bg-success-fg"],
+        [70, "bg-warning-fg"],
+        [90, "bg-warning-fg"],
+        [95, "bg-error-fg"],
     ])("uses the zone's own percentage and convention at %s%%", (percentage, color) => {
         renderGauge(percentage, percentage, 100);
 
         expect(screen.getAllByText(`${percentage}%`).length).toBeGreaterThan(0);
-        expect(screen.getByRole("progressbar", { name: "Zone A capacity" }).firstElementChild.style.background).toBe(
+        expect(screen.getByRole("progressbar", { name: "Zone A capacity" }).firstElementChild.className).toContain(
             color,
         );
     });
 
     it.each([
-        [69.999, "69.999%", "rgb(22, 163, 74)"],
-        [90.004, "90.004%", "rgb(239, 68, 68)"],
+        [69.999, "69.999%", "bg-success-fg"],
+        [90.004, "90.004%", "bg-error-fg"],
     ])("preserves boundary precision for %s%%", (percentage, displayed, color) => {
         renderGauge(percentage, percentage, 100);
 
         expect(screen.getByRole("img", { name: `Overall storage usage ${displayed.slice(0, -1)} percent` })).toBeTruthy();
         expect(screen.getAllByText(displayed).length).toBeGreaterThan(0);
         expect(
-            screen.getByRole("progressbar", { name: "Zone A capacity" }).firstElementChild.style.background,
-        ).toBe(color);
+            screen.getByRole("progressbar", { name: "Zone A capacity" }).firstElementChild.className,
+        ).toContain(color);
     });
 
     it("shows the actual value above 100% while bounding the visual and ARIA value", () => {

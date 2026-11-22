@@ -1,6 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.ZoneResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.StorageZoneCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.StorageZoneService;
 import jakarta.validation.Valid;
@@ -19,14 +20,15 @@ import java.util.List;
 public class StorageZoneController {
 
     private final StorageZoneService storageZoneService;
+    private final CropStorageMapper mapper;
 
     @PostMapping
-    public StorageZone create(@Valid @RequestBody StorageZoneCreateRequest request) {
-        return storageZoneService.create(request.toEntity());
+    public ZoneResponse create(@Valid @RequestBody StorageZoneCreateRequest request) {
+        return mapper.zone(storageZoneService.create(request.toEntity()));
     }
 
     @GetMapping
-    public List<StorageZone> findAll() {
-        return storageZoneService.findAll();
+    public List<ZoneResponse> findAll() {
+        return CropStorageMapper.all(storageZoneService.findAll(), mapper::zone);
     }
 }

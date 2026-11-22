@@ -1,11 +1,8 @@
 import { useState } from "react";
-import CropStorageField from "./CropStorageField";
-
-function localDateTimeValue() {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    return now.toISOString().slice(0, 16);
-}
+import { useTranslation } from "react-i18next";
+import { Button, Card, Field, Input, Select } from "../../../shared/ui";
+import { localDateTimeValue } from "../utils/dates";
+import FormMessage from "./FormMessage";
 
 function fieldError(errors, name, aliases = []) {
     for (const key of [name, ...aliases]) {
@@ -14,22 +11,9 @@ function fieldError(errors, name, aliases = []) {
     return undefined;
 }
 
-export default function LossRecordForm({
-    batches,
-    isSubmitting,
-    fieldErrors,
-    submitError,
-    success,
-    onSubmit,
-    onClearFeedback,
-}) {
-    const [values, setValues] = useState({
-        batchId: "",
-        quantityKg: "",
-        cause: "",
-        valueFcfa: "",
-        recordedAt: localDateTimeValue(),
-    });
+export default function LossRecordForm({ batches, isSubmitting, fieldErrors, submitError, success, onSubmit, onClearFeedback }) {
+    const { t } = useTranslation("cropstorage");
+    const [values, setValues] = useState({ batchId: "", quantityKg: "", cause: "", valueFcfa: "", recordedAt: localDateTimeValue() });
 
     function update(name, value) {
         setValues((current) => ({ ...current, [name]: value }));
@@ -48,81 +32,52 @@ export default function LossRecordForm({
     }
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className="rounded-xl border border-line bg-white p-5"
-        >
-            <h3 className="font-heading text-lg font-semibold text-gray-900">Add loss record</h3>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <CropStorageField
-                    id="loss-batch"
-                    label="Batch"
-                    value={values.batchId}
-                    onChange={(event) => update("batchId", event.target.value)}
-                    options={batches.map((batch) => ({
-                        value: batch.id,
-                        label: batch.batchCode ?? batch.batch_code ?? `Batch ${batch.id}`,
-                    }))}
-                    required
-                    error={fieldError(fieldErrors, "batchId", ["batch", "batch.id"])}
-                />
-                <CropStorageField
-                    id="loss-recorded-at"
-                    label="Recorded at"
-                    type="datetime-local"
-                    value={values.recordedAt}
-                    onChange={(event) => update("recordedAt", event.target.value)}
-                    required
-                    error={fieldError(fieldErrors, "recordedAt")}
-                />
-                <CropStorageField
-                    id="loss-quantity"
-                    label="Quantity (kg)"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={values.quantityKg}
-                    onChange={(event) => update("quantityKg", event.target.value)}
-                    required
-                    error={fieldError(fieldErrors, "quantityKg")}
-                />
-                <CropStorageField
-                    id="loss-value"
-                    label="Value (FCFA)"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={values.valueFcfa}
-                    onChange={(event) => update("valueFcfa", event.target.value)}
-                    error={fieldError(fieldErrors, "valueFcfa")}
-                />
-                <div className="sm:col-span-2">
-                    <CropStorageField
-                        id="loss-cause"
-                        label="Cause"
-                        value={values.cause}
-                        onChange={(event) => update("cause", event.target.value)}
-                        error={fieldError(fieldErrors, "cause")}
-                    />
+        <Card title={t("losses.form.title")} titleAs="h3">
+            <form onSubmit={handleSubmit}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label={t("losses.form.batch")} required error={fieldError(fieldErrors, "batchId", ["batch", "batch.id"])}>
+                        <Select value={values.batchId} onChange={(event) => update("batchId", event.target.value)} required>
+                            <option value="">{t("form.choose")}</option>
+                            {batches.map((batch) => (
+                                <option key={batch.id} value={batch.id}>
+                                    {batch.batchCode}
+                                </option>
+                            ))}
+                        </Select>
+                    </Field>
+                    <Field label={t("losses.form.recordedAt")} required error={fieldError(fieldErrors, "recordedAt")}>
+                        <Input type="datetime-local" value={values.recordedAt} onChange={(event) => update("recordedAt", event.target.value)} required />
+                    </Field>
+                    <Field label={t("losses.form.quantityKg")} required error={fieldError(fieldErrors, "quantityKg")}>
+                        <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={values.quantityKg}
+                            onChange={(event) => update("quantityKg", event.target.value)}
+                            required
+                        />
+                    </Field>
+                    <Field label={t("losses.form.value")} error={fieldError(fieldErrors, "valueFcfa")}>
+                        <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={values.valueFcfa}
+                            onChange={(event) => update("valueFcfa", event.target.value)}
+                        />
+                    </Field>
+                    <Field label={t("losses.form.cause")} error={fieldError(fieldErrors, "cause")} className="sm:col-span-2">
+                        <Input value={values.cause} onChange={(event) => update("cause", event.target.value)} />
+                    </Field>
                 </div>
-            </div>
-            {submitError && (
-                <p role="alert" className="mt-4 rounded-md border border-error/30 bg-error/5 px-3 py-2 text-sm text-error">
-                    {submitError}
-                </p>
-            )}
-            {success && (
-                <p role="status" className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2 text-sm text-success">
-                    Loss record created.
-                </p>
-            )}
-            <button
-                type="submit"
-                disabled={isSubmitting || batches.length === 0}
-                className="mt-4 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                {isSubmitting ? "Saving…" : "Add loss record"}
-            </button>
-        </form>
+                <FormMessage error={submitError} success={success ? t("losses.form.success") : null} />
+                <div className="mt-4">
+                    <Button type="submit" loading={isSubmitting} disabled={batches.length === 0}>
+                        {t("losses.form.submit")}
+                    </Button>
+                </div>
+            </form>
+        </Card>
     );
 }

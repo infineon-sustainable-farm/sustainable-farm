@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import CropStoragePage from "./CropStoragePage";
@@ -37,6 +36,7 @@ function renderDashboard() {
         data: dashboardData,
         isPending: false,
         isError: false,
+        isSuccess: true,
         isFetching: false,
         refetch: vi.fn(),
     });
@@ -45,6 +45,16 @@ function renderDashboard() {
             <CropStoragePage />
         </MemoryRouter>,
     );
+}
+
+// Plain DOM events from @testing-library/react (develop no longer ships user-event).
+function typeInto(input, value) {
+    act(() => input.focus());
+    fireEvent.change(input, { target: { value } });
+}
+
+function pressKey(input, key) {
+    fireEvent.keyDown(input, { key });
 }
 
 afterEach(cleanup);
@@ -64,16 +74,15 @@ describe("Crop Storage overview batch search", () => {
     });
 
     it("suggests and filters an exact batch ID beyond the initial five rows", async () => {
-        const user = userEvent.setup();
         renderDashboard();
         const input = screen.getByRole("combobox", { name: "Filter stored batches" });
 
-        await user.type(input, "MNG-2026-003");
+        typeInto(input, "MNG-2026-003");
 
         const listbox = screen.getByRole("listbox");
         expect(within(listbox).getByText("MNG-2026-003")).toBeTruthy();
         expect(within(listbox).getByText("MNG-2026-003-A")).toBeTruthy();
-        await user.click(within(listbox).getAllByRole("option")[0]);
+        fireEvent.click(within(listbox).getAllByRole("option")[0]);
 
         expect(input.value).toBe("MNG-2026-003");
         const table = screen.getByRole("table");
@@ -87,51 +96,50 @@ describe("Crop Storage overview batch search", () => {
         });
     });
 
-    it("matches partial IDs and product names without case sensitivity or surrounding spaces", async () => {
-        const user = userEvent.setup();
+    it("matches partial IDs and product names without case sensitivity or surrounding spaces", () => {
         renderDashboard();
         const input = screen.getByRole("combobox", { name: "Filter stored batches" });
 
-        await user.type(input, "  b-prio-00 ");
+        typeInto(input, "  b-prio-00 ");
         expect(within(screen.getByRole("listbox")).getAllByRole("option")).toHaveLength(5);
 
-        await user.clear(input);
-        await user.type(input, "  kEnT ");
+        typeInto(input, "");
+        typeInto(input, "  kEnT ");
         expect(within(screen.getByRole("listbox")).getAllByRole("option")).toHaveLength(2);
     });
 
-    it("shows a no-match message and supports Escape, keyboard selection, and clearing", async () => {
-        const user = userEvent.setup();
+    it("shows a no-match message and supports Escape, keyboard selection, and clearing", () => {
         renderDashboard();
         const input = screen.getByRole("combobox", { name: "Filter stored batches" });
 
-        await user.type(input, "not-a-batch");
+        typeInto(input, "not-a-batch");
         expect(screen.getByRole("status").textContent).toBe("No matching batches.");
-        await user.keyboard("{Escape}");
+        pressKey(input, "Escape");
         expect(screen.queryByRole("listbox")).toBeNull();
 
-        await user.clear(input);
-        await user.type(input, "B-PRIO-002");
-        await user.keyboard("{ArrowDown}{Enter}");
+        typeInto(input, "");
+        typeInto(input, "B-PRIO-002");
+        pressKey(input, "ArrowDown");
+        pressKey(input, "Enter");
         expect(input.value).toBe("B-PRIO-002");
         expect(within(screen.getByRole("table")).getByText("B-PRIO-002")).toBeTruthy();
         expect(within(screen.getByRole("table")).queryByText("B-PRIO-001")).toBeNull();
 
-        await user.clear(input);
+        typeInto(input, "");
         expect(screen.queryByRole("listbox")).toBeNull();
         expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(6);
     });
 
     it("closes suggestions when focus leaves the search input with Tab", async () => {
-        const user = userEvent.setup();
         renderDashboard();
         const input = screen.getByRole("combobox", { name: "Filter stored batches" });
 
-        await user.type(input, "MNG-2026-003");
+        typeInto(input, "MNG-2026-003");
         expect(screen.getByRole("listbox")).toBeTruthy();
 
-        await user.tab();
+        // Focus leaves the search box (what Tab does); the component closes on the next tick.
+        act(() => input.blur());
 
-        expect(screen.queryByRole("listbox")).toBeNull();
+        await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
     });
 });

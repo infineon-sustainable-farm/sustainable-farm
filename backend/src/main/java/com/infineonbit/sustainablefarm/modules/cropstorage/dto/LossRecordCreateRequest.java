@@ -1,5 +1,7 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.LossRecord;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +22,7 @@ public record LossRecordCreateRequest(
         record.setBatch(batch == null ? null : batch.toBatch());
         record.setQuantityKg(quantityKg);
         record.setCause(cause);
-        record.setValueFcfa(valueFcfa);
+        record.setValue(valueFcfa == null ? null : Money.of(valueFcfa, CurrencyCode.XOF));
         record.setRecordedAt(recordedAt);
         return record;
     }

@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.OperationalStatus;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StorageZone;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -19,7 +20,7 @@ public record StorageZoneCreateRequest(
         @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal humidityMinPercent,
         @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal humidityMaxPercent,
         Boolean coolingAvailable,
-        @NotBlank String status) {
+        @NotNull OperationalStatus status) {
 
     public StorageZone toEntity() {
         StorageZone zone = new StorageZone();

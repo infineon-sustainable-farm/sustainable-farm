@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * This does not prove the Product Transformation integration.
  */
 @WebMvcTest(controllers = StorageEntryController.class)
-@Import({CoreExceptionHandler.class, CropStorageEntryExceptionHandler.class})
+@Import(CoreExceptionHandler.class)
 class StorageEntryControllerTest {
 
     private static final String URL = "/api/crop-storage/entries";
@@ -181,12 +181,13 @@ class StorageEntryControllerTest {
     }
 
     @Test
-    void concurrentDuplicateRejectedByUniqueConstraintAnswers409Not500() throws Exception {
+    void anUntranslatedConstraintViolationStillAnswers409ThroughTheCoreHandler() throws Exception {
+        // The service turns the unique batch code refusal into a ConflictException
+        // (CropStorageBusinessRulesJpaTest); this only checks the core fallback.
         when(service.registerEntry(any())).thenThrow(new DataIntegrityViolationException("uk_batch_code"));
         postEntry(body(""))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("CONFLICT"))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("batch_id")));
+                .andExpect(jsonPath("$.code").value("CONFLICT"));
     }
 
     @Test

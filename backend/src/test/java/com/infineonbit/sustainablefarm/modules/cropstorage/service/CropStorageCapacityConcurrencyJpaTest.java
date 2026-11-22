@@ -1,5 +1,10 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.MovementType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropProductType;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.OperationalStatus;
 import com.infineonbit.sustainablefarm.core.exception.BusinessRuleException;
 import com.infineonbit.sustainablefarm.core.exception.ConflictException;
 import com.infineonbit.sustainablefarm.modules.cropstorage.CropStorageH2IsolationGuard;
@@ -76,6 +81,8 @@ class CropStorageCapacityConcurrencyJpaTest {
     @Autowired private CropStorageBatchRepository batches;
     @Autowired private StorageZoneRepository zones;
     @Autowired private StockMovementRepository movements;
+    // Plants and staff are other modules: their lookups are mocked here.
+    @MockitoBean private SharedReferences sharedReferences;
 
     @AfterEach
     void clear() {
@@ -277,7 +284,7 @@ class CropStorageCapacityConcurrencyJpaTest {
         StorageZone zone = new StorageZone();
         zone.setZoneCode("CAP-" + SEQ.incrementAndGet());
         zone.setCapacityKg(new BigDecimal(capacityKg));
-        zone.setStatus("ACTIVE");
+        zone.setStatus(OperationalStatus.ACTIVE);
         return zones.save(zone);
     }
 
@@ -285,10 +292,10 @@ class CropStorageCapacityConcurrencyJpaTest {
     private static CropStorageBatch newBatch(StorageZone zone, String initialKg, String currentKg) {
         CropStorageBatch batch = new CropStorageBatch();
         batch.setBatchCode("MAN-" + SEQ.incrementAndGet());
-        batch.setProductType("DRIED_MANGO");
+        batch.setProductType(CropProductType.DRIED_MANGO);
         batch.setInitialQuantityKg(new BigDecimal(initialKg));
         batch.setCurrentQuantityKg(currentKg == null ? null : new BigDecimal(currentKg));
-        batch.setStatus("STORED");
+        batch.setStatus(BatchStatus.STORED);
         batch.setCustomerPriority(0);
         batch.setStorageEntryDate(LocalDate.now());
         StorageZone ref = new StorageZone();
@@ -306,7 +313,7 @@ class CropStorageCapacityConcurrencyJpaTest {
 
     private static StockMovement in(CropStorageBatch batch, StorageZone toZone, String kg) {
         StockMovement movement = new StockMovement();
-        movement.setType("IN");
+        movement.setType(MovementType.IN);
         movement.setQuantityKg(new BigDecimal(kg));
         CropStorageBatch ref = new CropStorageBatch();
         ref.setId(batch.getId());

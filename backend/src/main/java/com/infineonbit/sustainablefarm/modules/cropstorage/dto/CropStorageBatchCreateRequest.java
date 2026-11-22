@@ -1,6 +1,11 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
+import com.infineonbit.sustainablefarm.core.money.CurrencyCode;
+import com.infineonbit.sustainablefarm.core.money.Money;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.BatchStatus;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropProductType;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.ProductStage;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -12,10 +17,14 @@ import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * mangoVariety is a variety name, resolved to its Plants catalogue key by the service
+ * (400 when the catalogue does not know it); valuePerKgFcfa is an amount in XOF.
+ */
 public record CropStorageBatchCreateRequest(
         @NotBlank String batchCode,
-        @NotBlank String productType,
-        String productStage,
+        @NotNull CropProductType productType,
+        ProductStage productStage,
         String origin,
         @Valid EntityReferenceRequest supplier,
         String mangoVariety,
@@ -28,7 +37,7 @@ public record CropStorageBatchCreateRequest(
         @PositiveOrZero BigDecimal currentQuantityKg,
         @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal moisturePercent,
         String qualityGrade,
-        @NotBlank String status,
+        @NotNull BatchStatus status,
         @Valid EntityReferenceRequest storageZone,
         LocalDate expectedDispatchDate,
         LocalDate expiryDate,
@@ -48,7 +57,6 @@ public record CropStorageBatchCreateRequest(
         batch.setProductStage(productStage);
         batch.setOrigin(origin);
         batch.setSupplier(supplier == null ? null : supplier.toSupplier());
-        batch.setMangoVariety(mangoVariety);
         batch.setHarvestDate(harvestDate);
         batch.setHarvestId(harvestId);
         batch.setProcessingDate(processingDate);
@@ -63,7 +71,7 @@ public record CropStorageBatchCreateRequest(
         batch.setExpectedDispatchDate(expectedDispatchDate);
         batch.setExpiryDate(expiryDate);
         batch.setCustomerPriority(customerPriority);
-        batch.setValuePerKgFcfa(valuePerKgFcfa);
+        batch.setValuePerKg(valuePerKgFcfa == null ? null : Money.of(valuePerKgFcfa, CurrencyCode.XOF));
         return batch;
     }
 }

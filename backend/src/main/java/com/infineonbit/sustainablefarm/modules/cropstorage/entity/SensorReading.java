@@ -1,11 +1,9 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -18,15 +16,12 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/** One measure of a sensor (expected every hour, agreed with Anar). */
 @Entity
 @Table(name = "sensor_reading")
 @Getter
 @Setter
-public class SensorReading {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class SensorReading extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sensor_id", nullable = false)
@@ -34,14 +29,15 @@ public class SensorReading {
 
     @DecimalMin("-50.0")
     @DecimalMax("100.0")
+    @Column(precision = 5, scale = 2)
     private BigDecimal temperature;
 
     @DecimalMin("0.0")
     @DecimalMax("100.0")
+    @Column(precision = 5, scale = 2)
     private BigDecimal humidity;
 
-
-        // Anar: sensor readings expected every hour
     @NotNull
+    @Column(nullable = false)
     private LocalDateTime measuredAt;
 }

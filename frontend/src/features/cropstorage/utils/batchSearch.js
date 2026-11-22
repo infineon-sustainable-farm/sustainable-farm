@@ -4,16 +4,16 @@ export function getBatchDisplayId(batch) {
     return batch.id == null ? "—" : `BT${String(batch.id).padStart(3, "0")}`;
 }
 
-export function getBatchProductLabel(batch) {
-    return (
-        batch.productName ??
-        batch.product?.name ??
-        batch.productType ??
-        batch.product_type ??
-        batch.cropType ??
-        batch.mangoType ??
-        "—"
-    );
+/**
+ * What a batch holds, as shown and searched: its variety (Plants catalogue name) and, with a
+ * translation function, the translated product type; the raw values otherwise.
+ */
+export function getBatchProductLabel(batch, t) {
+    const type = batch.productType ?? batch.product_type;
+    const typeLabel = type && t ? t(`enums.productType.${type}`, { defaultValue: type }) : type;
+    const variety = batch.mangoVariety ?? batch.productName ?? batch.product?.name ?? batch.cropType;
+    const parts = [variety, typeLabel].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "—";
 }
 
 export function findMatchingBatches(batches, search) {

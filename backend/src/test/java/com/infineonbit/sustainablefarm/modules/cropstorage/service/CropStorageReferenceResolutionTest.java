@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.service;
 
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.MovementType;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Alert;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.Sensor;
@@ -50,7 +51,7 @@ class CropStorageReferenceResolutionTest {
         request.setSupplier(supplierReference);
         request.setStorageZone(zoneReference);
 
-        new CropStorageBatchService(batches, suppliers, zones).create(request);
+        new CropStorageBatchService(batches, suppliers, zones, mock(SharedReferences.class)).create(request);
 
         assertSame(storedSupplier, request.getSupplier());
         assertSame(storedZone, request.getStorageZone());
@@ -161,7 +162,7 @@ class CropStorageReferenceResolutionTest {
         when(movements.save(any(StockMovement.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         StockMovement request = new StockMovement();
-        request.setType("TRANSFER");
+        request.setType(MovementType.TRANSFER);
         request.setQuantityKg(BigDecimal.ONE);
         CropStorageBatch batchReference = new CropStorageBatch();
         batchReference.setId(7L);

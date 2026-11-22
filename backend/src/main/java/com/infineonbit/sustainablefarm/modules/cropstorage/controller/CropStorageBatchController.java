@@ -1,6 +1,8 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.controller;
 
-import com.infineonbit.sustainablefarm.modules.cropstorage.entity.CropStorageBatch;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.ValuationSummary;
+import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageResponses.BatchResponse;
+import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageMapper;
 import com.infineonbit.sustainablefarm.modules.cropstorage.dto.CropStorageBatchCreateRequest;
 import com.infineonbit.sustainablefarm.modules.cropstorage.service.CropStorageBatchService;
 import jakarta.validation.Valid;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST endpoints of the batch inventory: creation, full listing, the FIFO
@@ -24,6 +25,7 @@ import java.util.Map;
 public class CropStorageBatchController {
 
     private final CropStorageBatchService batchService;
+    private final CropStorageMapper mapper;
 
     /**
      * Creates one batch; see CropStorageBatchService for the batch code convention.
@@ -32,8 +34,8 @@ public class CropStorageBatchController {
      * @return the saved batch
      */
     @PostMapping
-    public CropStorageBatch create(@Valid @RequestBody CropStorageBatchCreateRequest request) {
-        return batchService.create(request.toEntity());
+    public BatchResponse create(@Valid @RequestBody CropStorageBatchCreateRequest request) {
+        return mapper.batch(batchService.create(request.toEntity(), request.mangoVariety()));
     }
 
     /**
@@ -42,8 +44,8 @@ public class CropStorageBatchController {
      * @return all batches
      */
     @GetMapping
-    public List<CropStorageBatch> findAll() {
-        return batchService.findAll();
+    public List<BatchResponse> findAll() {
+        return mapper.batches(batchService.findAll());
     }
 
     /**
@@ -52,18 +54,18 @@ public class CropStorageBatchController {
      * @return non-empty batches, priority then entry date
      */
     @GetMapping("/fifo")
-    public List<CropStorageBatch> fifo() {
-        return batchService.fifo();
+    public List<BatchResponse> fifo() {
+        return mapper.batches(batchService.fifo());
     }
 
     /**
      * Returns the overview KPIs in all reporting units (kg, tonne, lb, m3,
      * FCFA, EUR, USD) for the dashboard header.
      *
-     * @return the seven-entry valuation map
+     * @return the valuation in the seven reporting units
      */
     @GetMapping("/summary")
-    public Map<String, Object> summary() {
+    public ValuationSummary summary() {
         return batchService.summary();
     }
 
@@ -74,7 +76,7 @@ public class CropStorageBatchController {
      * @return batches with an expiry date, soonest first
      */
     @GetMapping("/expiring")
-    public List<CropStorageBatch> expiring() {
-        return batchService.expiring();
+    public List<BatchResponse> expiring() {
+        return mapper.batches(batchService.expiring());
     }
 }

@@ -1,32 +1,27 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.entity;
 
+import com.infineonbit.sustainablefarm.core.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
+/** A temperature or humidity sensor installed in a storage zone. */
 @Entity
 @Table(name = "sensor")
 @Getter
 @Setter
-public class Sensor {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Sensor extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false, unique = true)
@@ -40,16 +35,10 @@ public class Sensor {
     @JoinColumn(name = "storage_zone_id")
     private StorageZone storageZone;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String status;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private OperationalStatus status;
 
     private LocalDate installationDate;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 }

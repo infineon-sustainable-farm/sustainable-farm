@@ -1,5 +1,6 @@
 package com.infineonbit.sustainablefarm.modules.cropstorage.dto;
 
+import com.infineonbit.sustainablefarm.modules.cropstorage.entity.MovementType;
 import com.infineonbit.sustainablefarm.modules.cropstorage.entity.StockMovement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record StockMovementCreateRequest(
-        @NotBlank String type,
+        @NotNull MovementType type,
         @NotNull @PositiveOrZero BigDecimal quantityKg,
         @Valid EntityReferenceRequest batch,
         @Valid EntityReferenceRequest fromZone,

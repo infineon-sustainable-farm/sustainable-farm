@@ -1,18 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import {
-    AlertTriangle,
-    Archive,
-    Banknote,
-    Bell,
-    Droplets,
-    Loader2,
-    Package,
-    Scale,
-    Thermometer,
-    Weight,
-} from "lucide-react";
+import { Archive, Banknote, Bell, Droplets, Package, Scale, Thermometer, Weight } from "lucide-react";
+import { KpiCard, PageHeader } from "../../../shared/ui";
+import { CROP_STORAGE_BASE } from "../paths";
 import {
     fetchAlertsByStatus,
     fetchBatches,
@@ -21,30 +13,25 @@ import {
     fetchSensors,
     fetchStorageZones,
 } from "../api";
-import {
-    ActiveAlertPanel,
-    BatchesMiniTable,
-    KpiCard,
-    SensorsPanel,
-    StorageGauge,
-    TrendChart,
-} from "./DashboardVisuals";
+import { ActiveAlertPanel, BatchesMiniTable, SensorsPanel, StorageGauge, TrendChart } from "./DashboardVisuals";
+import QueryState from "./QueryState";
 import {
     findMatchingBatches,
     getBatchDisplayId,
     getBatchProductLabel,
 } from "../utils/batchSearch";
-import { formatMoney, formatNumber, formatQuantity } from "../utils/formatters";
+import { EMPTY, currentLocale, formatMoney, formatNumber, formatQuantity } from "../utils/formatters";
+import { usePageTitle } from "../utils/usePageTitle";
 import { getOverallUsagePercent, withZoneUsage } from "../utils/storageZones";
 
 const PAGE_LINKS = {
-    stock: "batches",
-    weight: "batches",
-    volume: "zones",
-    value: "batches",
-    alerts: "alerts",
-    climate: "zones",
-    recovery: "quality",
+    stock: `${CROP_STORAGE_BASE}/batches`,
+    weight: `${CROP_STORAGE_BASE}/batches`,
+    volume: `${CROP_STORAGE_BASE}/zones`,
+    value: `${CROP_STORAGE_BASE}/batches`,
+    alerts: `${CROP_STORAGE_BASE}/alerts`,
+    climate: `${CROP_STORAGE_BASE}/zones`,
+    recovery: `${CROP_STORAGE_BASE}/quality`,
 };
 
 function zoneKey(zone) {
@@ -172,6 +159,7 @@ function deriveDashboardData(
 }
 
 export default function CropStoragePage() {
+    const { t } = useTranslation("cropstorage");
     const [now, setNow] = useState(new Date());
     const [batchSearch, setBatchSearch] = useState("");
     const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -179,16 +167,14 @@ export default function CropStoragePage() {
     const batchSearchRef = useRef(null);
     const batchesTableRef = useRef(null);
 
-    useEffect(() => {
-        document.title = "Crop Storage";
-    }, []);
+    usePageTitle("overview.title");
 
     useEffect(() => {
         const timer = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    const { data, isPending, isError, refetch, isFetching, error } = useQuery({
+    const dashboardQuery = useQuery({
         queryKey: ["cropstorage", "dashboard"],
         queryFn: async () => {
             const [summary, activeAlerts, batches, zones, sensors, readings] = await Promise.all([
@@ -202,6 +188,7 @@ export default function CropStoragePage() {
             return deriveDashboardData(summary, activeAlerts, batches, zones, sensors, readings);
         },
     });
+    const { data } = dashboardQuery;
 
     const summary = data?.summary ?? {};
     const totalLb =
@@ -278,115 +265,108 @@ export default function CropStoragePage() {
                 new Date(readingDate(reading)).getTime() >= cutoff;
             return {
                 id: sId,
-                label: sensor.name ?? `${isHumidity ? "Humidity" : "Temperature"} sensor ${sId}`,
+                label: sensor.name ?? t(isHumidity ? "overview.sensors.humidity" : "overview.sensors.temperature", { id: sId }),
                 kind: isHumidity ? "humidity" : "temperature",
                 valueText:
-                    raw == null ? "—" : `${formatNumber(Number(raw))}${isHumidity ? " %" : " °C"}`,
+                    raw == null
+                        ? EMPTY
+                        : t(isHumidity ? "percent" : "units.celsius", { value: formatNumber(Number(raw)) }),
                 online,
             };
         });
-    }, [data, now]);
+    }, [data, now, t]);
 
+    const activeAlertCount = data?.activeAlertCount ?? 0;
+    const recovery = summary.recoveryRate ?? summary.recoveryRatePercent;
+    const withUnit = (value, unitKey) => (value == null ? EMPTY : t(unitKey, { value: formatNumber(value) }));
     const cards = [
         {
-            label: "Current stock",
+            id: "stock",
+            label: t("overview.kpi.stock"),
             value: formatQuantity(summary.totalKg),
             icon: Package,
             to: PAGE_LINKS.stock,
-            badge: "bg-emerald-50 text-emerald-700",
-            caption: "Across all batches",
-            captionStyle: "text-emerald-700",
+            hint: t("overview.kpi.stockHint"),
         },
         {
-            label: "Stock weight",
-            value: formatNumber(summary.totalTonnes),
-            unit: summary.totalTonnes == null ? "" : "tonnes",
+            id: "weight",
+            label: t("overview.kpi.weight"),
+            value: withUnit(summary.totalTonnes, "units.tonnes"),
             icon: Weight,
             to: PAGE_LINKS.weight,
-            badge: "bg-emerald-50 text-emerald-700",
-            caption: `${formatQuantity(summary.totalKg)}${totalLb == null ? "" : ` · ${formatNumber(totalLb)} lb`}`,
-            captionStyle: "text-gray-500",
+            hint: totalLb == null ? formatQuantity(summary.totalKg) : `${formatQuantity(summary.totalKg)} · ${t("units.pounds", { value: formatNumber(totalLb) })}`,
         },
         {
-            label: "Stock volume",
-            value: formatNumber(summary.totalM3),
-            unit: "m³",
+            id: "volume",
+            label: t("overview.kpi.volume"),
+            value: withUnit(summary.totalM3, "units.cubicMeters"),
             icon: Archive,
             to: PAGE_LINKS.volume,
-            badge: "bg-amber-50 text-amber-700",
-            caption: `${formatNumber(data?.overallUsagePercent)}% of capacity`,
-            captionStyle: "text-emerald-700",
+            tone: "warning",
+            hint: t("overview.kpi.volumeHint", { value: formatNumber(data?.overallUsagePercent) }),
         },
         {
-            label: "Inventory value",
+            id: "value",
+            label: t("overview.kpi.value"),
             value: formatMoney(summary.totalValueFcfa),
             icon: Banknote,
             to: PAGE_LINKS.value,
-            badge: "bg-amber-50 text-amber-700",
-            caption:
+            tone: "warning",
+            hint:
                 totalEur == null && totalUsd == null
-                    ? "Total inventory value"
+                    ? t("overview.kpi.valueHint")
                     : `${formatNumber(totalEur)} EUR · ${formatNumber(totalUsd)} USD`,
-            captionStyle: "text-gray-500",
         },
         {
-            label: "Avg Temperature",
-            value: formatNumber(data?.averageTemperature),
-            unit: data?.averageTemperature == null ? "" : "°C",
+            id: "temperature",
+            label: t("overview.kpi.temperature"),
+            value: withUnit(data?.averageTemperature, "units.celsius"),
             icon: Thermometer,
             to: PAGE_LINKS.climate,
-            badge: "bg-orange-50 text-orange-700",
-            caption: "Target: 15–20 °C",
-            captionStyle: "text-emerald-700",
+            tone: "warning",
+            hint: t("overview.kpi.temperatureTarget"),
         },
         {
-            label: "Avg Humidity",
-            value: formatNumber(data?.averageHumidity),
-            unit: data?.averageHumidity == null ? "" : "%",
+            id: "humidity",
+            label: t("overview.kpi.humidity"),
+            value: withUnit(data?.averageHumidity, "percent"),
             icon: Droplets,
             to: PAGE_LINKS.climate,
-            badge: "bg-sky-50 text-sky-700",
-            caption: "Target: 50–55 %",
-            captionStyle: "text-emerald-700",
+            tone: "info",
+            hint: t("overview.kpi.humidityTarget"),
         },
         {
-            label: "Recovery Rate",
-            value: summary.recoveryRate ?? summary.recoveryRatePercent,
-            formatValue: true,
-            unit:
-                summary.recoveryRate == null && summary.recoveryRatePercent == null ? "" : "%",
+            id: "recovery",
+            label: t("overview.kpi.recovery"),
+            value: withUnit(recovery, "percent"),
             icon: Scale,
             to: PAGE_LINKS.recovery,
-            badge: "bg-emerald-50 text-emerald-700",
-            caption:
-                summary.recoveryRate == null && summary.recoveryRatePercent == null
-                    ? "Not reported by summary API"
-                    : "Target: at least 80%",
-            captionStyle: "text-gray-500",
+            hint: recovery == null ? t("overview.kpi.recoveryMissing") : t("overview.kpi.recoveryTarget"),
         },
         {
-            label: "Active alerts",
-            value: formatNumber(data?.activeAlertCount),
-            unit: "alerts",
+            id: "alerts",
+            label: t("overview.kpi.alerts"),
+            value: t("overview.kpi.alertCount", { count: activeAlertCount, value: formatNumber(activeAlertCount) }),
             icon: Bell,
             to: PAGE_LINKS.alerts,
-            badge: data?.activeAlertCount
-                ? "bg-red-50 text-red-700"
-                : "bg-emerald-50 text-emerald-700",
-            caption: data?.activeAlertCount ? "Requires attention" : "No active alerts",
-            captionStyle: data?.activeAlertCount ? "text-red-600" : "text-emerald-700",
+            tone: activeAlertCount ? "error" : "primary",
+            hint: activeAlertCount ? t("overview.kpi.alertsAttention") : t("overview.kpi.alertsNone"),
         },
     ];
 
     return (
-        <div className="min-h-dvh bg-gray-50">
-            <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6">
-                <header className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Crop Storage Dashboard</h1>
-                        <p className="text-sm text-gray-500">Farm Sustainable Management System</p>
-                    </div>
-                    <div className="flex w-full flex-wrap items-center gap-4 sm:w-auto">
+        <div className="flex flex-col gap-5">
+            <PageHeader
+                title={t("overview.title")}
+                subtitle={t("overview.subtitle")}
+                meta={
+                    <span className="tabular-nums">
+                        {now.toLocaleDateString(currentLocale(), { month: "long", year: "numeric" })}{" "}
+                        {now.toLocaleTimeString(currentLocale(), { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                }
+                actions={
+                    <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
                         <div
                             ref={batchSearchRef}
                             className="relative w-full sm:w-64"
@@ -411,29 +391,27 @@ export default function CropStoragePage() {
                                 onFocus={() => {
                                     if (batchSearch.trim()) setSuggestionsOpen(true);
                                 }}
-                                placeholder="Search by ID or product"
-                                aria-label="Filter stored batches"
+                                placeholder={t("overview.search.placeholder")}
+                                aria-label={t("overview.search.label")}
                                 role="combobox"
                                 aria-autocomplete="list"
                                 aria-expanded={suggestionsOpen && Boolean(batchSearch.trim())}
                                 aria-controls="cropstorage-batch-search-listbox"
                                 aria-activedescendant={
-                                    activeSuggestion >= 0
-                                        ? `cropstorage-batch-suggestion-${activeSuggestion}`
-                                        : undefined
+                                    activeSuggestion >= 0 ? `cropstorage-batch-suggestion-${activeSuggestion}` : undefined
                                 }
-                                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-emerald-600 focus:outline-none"
+                                className="w-full rounded-control border border-border-input bg-surface-raised px-3 py-2 text-sm text-text focus-visible:outline-2 focus-visible:outline-primary"
                             />
                             {suggestionsOpen && batchSearch.trim() && (
                                 <ul
                                     id="cropstorage-batch-search-listbox"
                                     role="listbox"
-                                    aria-label="Matching Crop Storage batches"
-                                    className="absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                                    aria-label={t("overview.search.listLabel")}
+                                    className="absolute top-full right-0 left-0 z-(--z-overlay) mt-1 max-h-60 overflow-y-auto rounded-control border border-border-subtle bg-surface-raised py-1 shadow-overlay"
                                 >
                                     {batchSuggestions.length === 0 ? (
-                                        <li className="px-3 py-2 text-sm text-gray-500" role="status">
-                                            No matching batches.
+                                        <li className="px-3 py-2 text-sm text-text-muted" role="status">
+                                            {t("overview.search.noMatch")}
                                         </li>
                                     ) : (
                                         batchSuggestions.map((batch, index) => (
@@ -446,151 +424,90 @@ export default function CropStoragePage() {
                                                 onMouseDown={(event) => event.preventDefault()}
                                                 onClick={() => selectBatch(batch)}
                                                 className={`cursor-pointer px-3 py-2 text-sm ${
-                                                    activeSuggestion === index
-                                                        ? "bg-emerald-50 text-emerald-900"
-                                                        : "text-gray-700 hover:bg-gray-50"
+                                                    activeSuggestion === index ? "bg-primary-tint text-text" : "text-text hover:bg-surface-muted"
                                                 }`}
                                             >
                                                 <span className="font-semibold">{getBatchDisplayId(batch)}</span>
-                                                <span className="ml-2 text-gray-500">
-                                                    {getBatchProductLabel(batch)}
-                                                </span>
+                                                <span className="ml-2 text-text-muted">{getBatchProductLabel(batch, t)}</span>
                                             </li>
                                         ))
                                     )}
                                 </ul>
                             )}
                         </div>
-                        <span className="text-sm text-gray-500">
-                            {now.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900 tabular-nums">
-                            {now.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit" })}
-                        </span>
                         <Link
                             to={PAGE_LINKS.alerts}
-                            aria-label="Open alerts"
-                            className="relative rounded-lg border border-gray-200 bg-white p-2 text-gray-600 hover:border-emerald-600"
+                            aria-label={t("overview.openAlerts")}
+                            className="relative rounded-control border border-border-input bg-surface-raised p-2 text-text-muted hover:border-primary"
                         >
                             <Bell size={17} aria-hidden="true" />
-                            {data?.activeAlertCount ? (
-                                <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                                    {data.activeAlertCount}
+                            {activeAlertCount ? (
+                                <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-pill bg-danger px-1 text-xs font-bold text-on-primary">
+                                    {activeAlertCount}
                                 </span>
                             ) : null}
                         </Link>
                     </div>
-                </header>
+                }
+            />
 
-                {isPending && (
-                    <div className="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-6 py-16 text-sm text-gray-500">
-                        <Loader2 size={18} className="animate-spin" />
-                        Loading storage dashboard…
-                    </div>
-                )}
+            <QueryState query={dashboardQuery} errorKey="overview.loadError" rows={4} />
 
-                {isError && (
-                    <div className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 px-6 py-16 text-center">
-                        <AlertTriangle size={28} className="text-red-600" />
-                        <div>
-                            <p className="text-base font-bold text-gray-900">
-                                Crop Storage dashboard could not be loaded
-                            </p>
-                            <p className="mt-1 text-sm text-gray-500">{error.message}</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
-                        >
-                            {isFetching ? "Retrying…" : "Retry"}
-                        </button>
-                    </div>
-                )}
+            {dashboardQuery.isSuccess && (
+                <>
+                    <section aria-label={t("overview.kpiLabel")} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        {cards.map(({ id, ...card }) => (
+                            <KpiCard key={id} {...card} />
+                        ))}
+                    </section>
 
-                {!isPending && !isError && (
-                    <>
-                        <section aria-label="Inventory key performance indicators">
-                            <div
-                                style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                                    gap: "12px",
-                                }}
-                            >
-                                {cards.map((card) => (
-                                    <KpiCard
-                                        key={card.label}
-                                        {...card}
-                                        value={card.formatValue ? formatNumber(card.value) : card.value}
-                                    />
-                                ))}
-                            </div>
-                        </section>
+                    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <StorageGauge
+                            percentage={data.overallUsagePercent}
+                            usedKg={(data.zones ?? []).every((zone) => zone.usedKg != null)
+                                ? data.zones.reduce((total, zone) => total + zone.usedKg, 0)
+                                : null}
+                            capacityKg={(data.zones ?? []).every((zone) => zone.capacityKg != null && zone.capacityKg > 0)
+                                ? data.zones.reduce((total, zone) => total + zone.capacityKg, 0)
+                                : null}
+                            zones={data.zones}
+                        />
+                        <TrendChart
+                            title={t("overview.trend.temperature")}
+                            readings={data.temperatureTrend}
+                            field="temperature"
+                            unit="°C"
+                            color="var(--color-chart-2)"
+                            targetMin={15}
+                            targetMax={20}
+                            emptyMessage={t("overview.trend.noTemperature")}
+                        />
+                        <TrendChart
+                            title={t("overview.trend.humidity")}
+                            readings={data.humidityTrend}
+                            field="humidity"
+                            unit="%"
+                            color="var(--color-chart-6)"
+                            targetMin={50}
+                            targetMax={55}
+                            emptyMessage={t("overview.trend.noHumidity")}
+                        />
+                        <ActiveAlertPanel alerts={data.activeAlerts} to={PAGE_LINKS.alerts} />
+                    </section>
 
-                        <section
-                            style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                                gap: "16px",
-                            }}
-                        >
-                            <StorageGauge
-                                percentage={data.overallUsagePercent}
-                                usedKg={(data.zones ?? []).every((zone) => zone.usedKg != null)
-                                    ? data.zones.reduce((total, zone) => total + zone.usedKg, 0)
-                                    : null}
-                                capacityKg={(data.zones ?? []).every(
-                                    (zone) => zone.capacityKg != null && zone.capacityKg > 0,
-                                )
-                                    ? data.zones.reduce((total, zone) => total + zone.capacityKg, 0)
-                                    : null}
-                                zones={data.zones}
-                            />
-                            <TrendChart
-                                title="Temperature Trend"
-                                readings={data.temperatureTrend}
-                                field="temperature"
-                                unit="°C"
-                                color="#c2630b"
-                                targetMin={15}
-                                targetMax={20}
-                                emptyMessage="No temperature readings in the last 24 hours. Readings will appear when sensors report."
-                            />
-                            <TrendChart
-                                title="Humidity Trend"
-                                readings={data.humidityTrend}
-                                field="humidity"
-                                unit="%"
-                                color="#0284c7"
-                                targetMin={50}
-                                targetMax={55}
-                                emptyMessage="No humidity readings in the last 24 hours. Readings will appear when sensors report."
-                            />
-                            <ActiveAlertPanel alerts={data.activeAlerts} to={PAGE_LINKS.alerts} />
-                        </section>
-
-                        <section
-                            style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-                                gap: "16px",
-                            }}
-                        >
-                            <BatchesMiniTable
-                                batches={data.batches}
-                                zoneClimates={zoneClimates}
-                                zoneKeyOf={batchZoneKey}
-                                search={batchSearch}
-                                viewAllTo={PAGE_LINKS.stock}
-                                tableRef={batchesTableRef}
-                            />
-                            <SensorsPanel sensors={sensorCards} />
-                        </section>
-                    </>
-                )}
-            </div>
+                    <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                        <BatchesMiniTable
+                            batches={data.batches}
+                            zoneClimates={zoneClimates}
+                            zoneKeyOf={batchZoneKey}
+                            search={batchSearch}
+                            viewAllTo={PAGE_LINKS.stock}
+                            tableRef={batchesTableRef}
+                        />
+                        <SensorsPanel sensors={sensorCards} />
+                    </section>
+                </>
+            )}
         </div>
     );
 }
