@@ -1,0 +1,442 @@
+{
+  "name": "Crop storage",
+  "pageTitle": "{{screen}} — Crop Storage",
+  "percent": "{{value}}%",
+  "nav": {
+    "overview": "Overview",
+    "zones": "Zones",
+    "batches": "Batches",
+    "movements": "Movements",
+    "alerts": "Alerts",
+    "quality": "Quality & Losses",
+    "scenarioAnalysis": "Scenario Analysis"
+  },
+  "units": {
+    "celsius": "{{value}} °C",
+    "tonnes": "{{value}} t",
+    "pounds": "{{value}} lb",
+    "cubicMeters": "{{value}} m³"
+  },
+  "form": {
+    "choose": "Choose…",
+    "none": "None"
+  },
+  "errors": {
+    "submit": "Not saved: {{message}}",
+    "generic": "Not saved. Please try again."
+  },
+  "enums": {
+    "batchStatus": {
+      "STORED": "Stored",
+      "DISPATCHED": "Dispatched"
+    },
+    "operationalStatus": {
+      "ACTIVE": "Active",
+      "MAINTENANCE": "Maintenance",
+      "INACTIVE": "Inactive"
+    },
+    "productType": {
+      "FRESH_MANGO": "Fresh mango",
+      "DRIED_MANGO": "Dried mango"
+    },
+    "productStage": {
+      "FRESH": "Fresh",
+      "DRIED": "Dried",
+      "PACKAGED": "Packaged",
+      "WASTE": "Waste",
+      "RETURNED": "Returned"
+    },
+    "movementType": {
+      "IN": "In",
+      "OUT": "Out",
+      "TRANSFER": "Transfer"
+    },
+    "alertStatus": {
+      "ACTIVE": "Active",
+      "ACKNOWLEDGED": "Acknowledged",
+      "RESOLVED": "Resolved"
+    },
+    "alertType": {
+      "TEMPERATURE": "Temperature",
+      "HUMIDITY": "Humidity",
+      "DAMAGE": "Damage"
+    },
+    "severity": {
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    }
+  },
+  "overview": {
+    "title": "Crop Storage Dashboard",
+    "subtitle": "Stock, capacity and storage conditions",
+    "loadError": "Crop Storage dashboard could not be loaded: {{message}}",
+    "openAlerts": "Open alerts",
+    "kpiLabel": "Inventory key performance indicators",
+    "search": {
+      "placeholder": "Search by ID or product",
+      "label": "Filter stored batches",
+      "listLabel": "Matching Crop Storage batches",
+      "noMatch": "No matching batches."
+    },
+    "kpi": {
+      "stock": "Current stock",
+      "stockHint": "Across all batches",
+      "weight": "Stock weight",
+      "volume": "Stock volume",
+      "volumeHint": "{{value}}% of capacity",
+      "value": "Inventory value",
+      "valueHint": "Total inventory value",
+      "temperature": "Avg temperature",
+      "temperatureTarget": "Target: 15–20 °C",
+      "humidity": "Avg humidity",
+      "humidityTarget": "Target: 50–55 %",
+      "recovery": "Recovery rate",
+      "recoveryMissing": "Not reported by the summary",
+      "recoveryTarget": "Target: at least 80%",
+      "alerts": "Active alerts",
+      "alertCount_one": "{{value}} alert",
+      "alertCount_other": "{{value}} alerts",
+      "alertsAttention": "Requires attention",
+      "alertsNone": "No active alerts"
+    },
+    "gauge": {
+      "title": "Storage capacity",
+      "unavailable": "Capacity data unavailable",
+      "noZone": "No storage zones configured. Add zones to track capacity.",
+      "ariaUnavailable": "Overall storage usage unavailable",
+      "aria": "Overall storage usage {{value}} percent",
+      "zoneAria": "{{zone}} capacity"
+    },
+    "trend": {
+      "temperature": "Temperature trend",
+      "humidity": "Humidity trend",
+      "last24h": "Last 24 hours",
+      "ago": "24 hours ago",
+      "now": "Now",
+      "target": "Target {{min}}–{{max}}{{unit}}",
+      "noTemperature": "No temperature readings in the last 24 hours. Readings will appear when sensors report.",
+      "noHumidity": "No humidity readings in the last 24 hours. Readings will appear when sensors report."
+    },
+    "alert": {
+      "title": "Active alert",
+      "none": "No active alerts",
+      "monitored": "Sensor thresholds are monitored continuously.",
+      "detected": "{{type}} detected",
+      "defaultMessage": "Threshold crossed in a storage zone.",
+      "details": "View details"
+    },
+    "batches": {
+      "title": "Stored batches",
+      "viewAll": "View all batches →",
+      "noMatch": "No batch matches this search.",
+      "columns": {
+        "id": "Batch ID",
+        "product": "Product",
+        "quantity": "Quantity",
+        "temperature": "Temp",
+        "humidity": "Humidity",
+        "status": "Batch status",
+        "updated": "Last updated"
+      }
+    },
+    "sensors": {
+      "title": "Environmental sensors",
+      "none": "No sensors registered in storage zones.",
+      "online": "Online",
+      "noData": "No recent data",
+      "humidity": "Humidity sensor {{id}}",
+      "temperature": "Temperature sensor {{id}}"
+    }
+  },
+  "zones": {
+    "title": "Storage zones",
+    "subtitle": "Review zone capacity and add storage areas.",
+    "loadError": "Storage zones could not be loaded: {{message}}",
+    "empty": "No storage zones yet. Create one below to see its capacity here.",
+    "tableCaption": "Storage zones and their capacity",
+    "usageLabel": "{{zone}} capacity used",
+    "usedValue": "{{value}}% used",
+    "usageUnavailable": "Usage unavailable",
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "status": "Status",
+      "capacity": "Capacity",
+      "capacityM3": "Capacity (m³)",
+      "used": "Used"
+    },
+    "form": {
+      "title": "Create storage zone",
+      "code": "Code",
+      "name": "Name",
+      "capacityKg": "Capacity (kg)",
+      "status": "Status",
+      "description": "Description",
+      "submit": "Create zone",
+      "success": "Storage zone created successfully."
+    }
+  },
+  "batches": {
+    "title": "Batches",
+    "subtitle": "Inventory batch records and traceability details.",
+    "loadError": "Batches could not be loaded: {{message}}",
+    "empty": "No batches in inventory yet. Create one below to get started.",
+    "tableCaption": "Batches in inventory",
+    "columns": {
+      "batchCode": "Batch code",
+      "product": "Product",
+      "variety": "Variety",
+      "stage": "Stage",
+      "status": "Status",
+      "currentStock": "Current stock",
+      "zone": "Storage zone",
+      "expiry": "Expiry"
+    },
+    "form": {
+      "title": "Create batch",
+      "batchCode": "Batch code",
+      "productType": "Product type",
+      "productStage": "Product stage",
+      "status": "Status",
+      "mangoVariety": "Mango variety",
+      "varietiesError": "The Plants variety catalogue could not be loaded.",
+      "origin": "Origin",
+      "supplierId": "Supplier",
+      "storageZoneId": "Storage zone",
+      "initialQuantityKg": "Initial quantity (kg)",
+      "currentQuantityKg": "Current quantity (kg)",
+      "moisturePercent": "Moisture (%)",
+      "qualityGrade": "Quality grade",
+      "harvestId": "Plants harvest ID",
+      "harvestDate": "Harvest date",
+      "processingDate": "Processing date",
+      "packagingDate": "Packaging date",
+      "storageEntryDate": "Storage entry date",
+      "expectedDispatchDate": "Expected dispatch date",
+      "expiryDate": "Expiry date",
+      "customerPriority": "Customer priority",
+      "valuePerKgFcfa": "Value per kg (FCFA)",
+      "submit": "Create batch",
+      "success": "Batch created successfully."
+    }
+  },
+  "movements": {
+    "title": "Stock movements",
+    "subtitle": "Review batch movement history and register stock changes.",
+    "history": "Movement history",
+    "loadError": "Movement history could not be loaded: {{message}}",
+    "noBatch": "Create a batch before viewing or registering its movements.",
+    "noZone": "No storage zones available. Create a zone before moving stock into storage.",
+    "empty": "No movements recorded for this batch yet. Register one below to build its history.",
+    "tableCaption": "Movements of the selected batch",
+    "columns": {
+      "id": "ID",
+      "type": "Movement type",
+      "quantity": "Quantity",
+      "fromZone": "From zone",
+      "toZone": "To zone",
+      "reason": "Reason",
+      "movedAt": "Moved at"
+    },
+    "form": {
+      "title": "Register movement",
+      "batch": "Batch",
+      "type": "Movement type",
+      "quantityKg": "Quantity (kg)",
+      "targetZone": "Target zone",
+      "reason": "Reason",
+      "submit": "Register movement",
+      "success": "Movement registered successfully.",
+      "capacityExceeded": "Zone capacity exceeded."
+    }
+  },
+  "alerts": {
+    "title": "Alerts",
+    "subtitle": "Review storage alerts and update their status.",
+    "filter": "Status",
+    "allStatuses": "All statuses",
+    "loadError": "Alerts could not be loaded: {{message}}",
+    "updateError": "Alert could not be updated: {{message}}",
+    "acknowledged": "Alert acknowledged.",
+    "resolved": "Alert resolved.",
+    "empty": "No alerts recorded yet. Alerts will appear when a storage condition needs attention.",
+    "emptyFiltered": "No alerts with the status {{status}}. Try another status filter.",
+    "tableCaption": "Storage alerts",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve",
+    "noAction": "No actions",
+    "columns": {
+      "id": "ID",
+      "type": "Alert type",
+      "severity": "Severity",
+      "message": "Message",
+      "sensor": "Sensor",
+      "raisedAt": "Raised at",
+      "status": "Status"
+    }
+  },
+  "quality": {
+    "title": "Quality & Losses",
+    "subtitle": "Track inspection results and recorded inventory losses.",
+    "checks": "Quality checks",
+    "filter": "Filter by batch",
+    "allBatches": "All batches",
+    "noBatch": "No batches yet. Create a batch before recording a quality check.",
+    "loadError": "Quality checks could not be loaded: {{message}}",
+    "empty": "No quality checks match this filter. Add a check below or choose another batch.",
+    "tableCaption": "Quality checks",
+    "passed": "Passed",
+    "failed": "Failed",
+    "columns": {
+      "batch": "Batch",
+      "checkedAt": "Checked at",
+      "moisture": "Moisture",
+      "grade": "Grade",
+      "result": "Result",
+      "inspector": "Inspector",
+      "notes": "Notes"
+    },
+    "form": {
+      "title": "Add quality check",
+      "batch": "Batch",
+      "checkedAt": "Checked at",
+      "moisture": "Moisture (%)",
+      "grade": "Quality grade",
+      "result": "Result",
+      "inspector": "Inspector",
+      "notes": "Notes",
+      "submit": "Add quality check",
+      "success": "Quality check created."
+    }
+  },
+  "losses": {
+    "title": "Loss records",
+    "loadError": "Loss records could not be loaded: {{message}}",
+    "empty": "No loss records yet. Add a record below to track inventory losses.",
+    "tableCaption": "Loss records",
+    "columns": {
+      "batch": "Batch",
+      "recordedAt": "Recorded at",
+      "quantity": "Quantity",
+      "cause": "Cause",
+      "value": "Value"
+    },
+    "form": {
+      "title": "Add loss record",
+      "batch": "Batch",
+      "recordedAt": "Recorded at",
+      "quantityKg": "Quantity (kg)",
+      "value": "Value (FCFA)",
+      "cause": "Cause",
+      "submit": "Add loss record",
+      "success": "Loss record created."
+    }
+  },
+  "scenario": {
+    "title": "Scenario Analysis",
+    "heading": "What-if Scenario Analysis",
+    "subtitle": "Simulate investment hypotheses and projected ROI.",
+    "disclaimerTitle": "Demonstration simulation.",
+    "disclaimer": "All values and results are provisional, unvalidated assumptions — not farm measurements and not investment advice. This page calculates locally in your browser: it does not change any real storage capacity, does not write to the database and does not trigger any decision or authorisation.",
+    "presets": "Scenario presets",
+    "preset": {
+      "small": "Small expansion",
+      "full": "Full upgrade",
+      "solar": "Solar power only"
+    },
+    "hypothesis": "Hypothesis",
+    "results": "Results",
+    "inputs": {
+      "storage": "Additional storage capacity",
+      "sensors": "Additional sensors",
+      "cooling": "Cooling upgrade (refrigeration)",
+      "coolingHint": "Reduces post-harvest losses by 30% (relative).",
+      "solar": "Solar power installation",
+      "solarHint": "Saves ~80% of the annual electricity bill."
+    },
+    "assumptionsTitle": "Data assumptions",
+    "allAssumptions": "All assumptions used by the formulas",
+    "assumptions": {
+      "storageCost": "Storage cost per m²",
+      "sensorCost": "Sensor cost",
+      "mangoValue": "Mango reference value",
+      "baselineLoss": "Baseline loss rate",
+      "unmetDemand": "Unmet storage demand",
+      "period": "Analysis period",
+      "coolingInvestment": "Cooling investment",
+      "solarInvestment": "Solar investment",
+      "addedCapacity": "Added capacity",
+      "sensorEffect": "Sensor effect",
+      "coolingEffect": "Cooling effect",
+      "electricityBill": "Annual electricity bill",
+      "solarSaving": "Solar electricity saving",
+      "referenceSurface": "Reference used surface (fictitious)",
+      "margin": "Margin on used added capacity",
+      "storageUpkeep": "Storage upkeep",
+      "sensorUpkeep": "Sensor upkeep",
+      "coolingOperation": "Cooling operation",
+      "solarUpkeep": "Solar upkeep"
+    },
+    "units": {
+      "m2": "m²",
+      "sensors": "sensors",
+      "points": "{{value}} pts",
+      "percent": "{{value}} %",
+      "perTonne": "{{value}} / t",
+      "perYear": "{{value}} / year",
+      "perM2PerYear": "{{value}} / m² / year",
+      "percentOfCostPerYear": "{{value}} % of cost / year",
+      "tonnesPerYear": "{{value}} t / year (max)",
+      "tonnesPerM2": "{{value}} t / m²",
+      "squareMeters": "{{value}} m²",
+      "years": "{{value}} years",
+      "sensorEffect": "−{{value}} pt each, max {{max}} effective",
+      "coolingEffect": "−{{value}} % relative on remaining loss"
+    },
+    "formulaNote": "Annual net benefit equals gross benefit minus operating cost. Break-even is calculated from the initial investment and the annual net benefit.",
+    "basisNote": "Basis: provisional demonstration assumptions. Validation with operational farm data is still required.",
+    "result": {
+      "investment": "Initial investment",
+      "addedCapacity": "Additional capacity",
+      "usedCapacity": "Expected capacity used",
+      "lossReduction": "Estimated loss reduction",
+      "annualCost": "Annual operating cost",
+      "grossBenefit": "Annual gross benefit",
+      "netBenefit": "Annual net benefit",
+      "breakEven": "Break-even point",
+      "fiveYear": "Net gain after 5 years",
+      "outlook": "Financial outlook"
+    },
+    "resultsNote": "Results are calculated from the assumptions shown in the Hypothesis panel. Loss reduction is in percentage points of the {{value}} % baseline.",
+    "breakEven": {
+      "immediate": "Immediate",
+      "months": "{{months}} months ({{years}} years)"
+    },
+    "outlook": {
+      "PROFITABLE_WITHIN_HORIZON": "Profitable within 5 years",
+      "BREAK_EVEN_AFTER_HORIZON": "Break-even after 5 years",
+      "NOT_FINANCIALLY_VIABLE": "Not financially viable",
+      "NO_BREAK_EVEN": "No break-even"
+    },
+    "year": "Year {{year}}",
+    "chart": {
+      "caption": "Cumulative cost vs cumulative benefit (FCFA)",
+      "xAxis": "Projection year",
+      "yAxis": "Cumulative amount (FCFA)",
+      "cost": "Cumulative cost",
+      "benefit": "Cumulative benefit",
+      "net": "Cumulative net",
+      "asTable": "Chart values as a table",
+      "tableCaption": "Cumulative cost, benefit and net gain per projection year, in FCFA",
+      "yearColumn": "Year"
+    },
+    "summary": {
+      "show": "Show summary",
+      "note": "Displays a temporary on-screen summary; no file is downloaded.",
+      "label": "Scenario summary",
+      "title": "Summary (simulation)",
+      "text": "Investment: {{investment}} · Operating cost: {{cost}}/year · Net benefit: {{net}}/year · Break-even: {{breakEven}} · 5-year net: {{fiveYear}} · Outlook: {{outlook}}"
+    }
+  }
+}

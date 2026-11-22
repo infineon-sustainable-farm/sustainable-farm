@@ -1,0 +1,406 @@
+{
+  "name": "Erntelager",
+  "pageTitle": "{{screen}} — Erntelager",
+  "percent": "{{value}} %",
+  "nav": {
+    "overview": "Übersicht",
+    "zones": "Zonen",
+    "batches": "Chargen",
+    "movements": "Bewegungen",
+    "alerts": "Warnungen",
+    "quality": "Qualität & Verluste",
+    "scenarioAnalysis": "Szenarioanalyse"
+  },
+  "units": {
+    "celsius": "{{value}} °C",
+    "tonnes": "{{value}} t",
+    "pounds": "{{value}} lb",
+    "cubicMeters": "{{value}} m³"
+  },
+  "form": {
+    "choose": "Auswählen…",
+    "none": "Keine"
+  },
+  "errors": {
+    "submit": "Nicht gespeichert: {{message}}",
+    "generic": "Nicht gespeichert. Bitte erneut versuchen."
+  },
+  "enums": {
+    "batchStatus": { "STORED": "Eingelagert", "DISPATCHED": "Versandt" },
+    "operationalStatus": { "ACTIVE": "Aktiv", "MAINTENANCE": "Wartung", "INACTIVE": "Inaktiv" },
+    "productType": { "FRESH_MANGO": "Frische Mango", "DRIED_MANGO": "Getrocknete Mango" },
+    "productStage": { "FRESH": "Frisch", "DRIED": "Getrocknet", "PACKAGED": "Verpackt", "WASTE": "Ausschuss", "RETURNED": "Zurückgegeben" },
+    "movementType": { "IN": "Eingang", "OUT": "Ausgang", "TRANSFER": "Umlagerung" },
+    "alertStatus": { "ACTIVE": "Aktiv", "ACKNOWLEDGED": "Bestätigt", "RESOLVED": "Behoben" },
+    "alertType": { "TEMPERATURE": "Temperatur", "HUMIDITY": "Luftfeuchtigkeit", "DAMAGE": "Schaden" },
+    "severity": { "HIGH": "Hoch", "MEDIUM": "Mittel", "LOW": "Niedrig" }
+  },
+  "overview": {
+    "title": "Erntelager-Dashboard",
+    "subtitle": "Bestand, Kapazität und Lagerbedingungen",
+    "loadError": "Das Erntelager-Dashboard konnte nicht geladen werden: {{message}}",
+    "openAlerts": "Warnungen öffnen",
+    "kpiLabel": "Kennzahlen des Bestands",
+    "search": {
+      "placeholder": "Nach ID oder Produkt suchen",
+      "label": "Eingelagerte Chargen filtern",
+      "listLabel": "Passende Chargen",
+      "noMatch": "Keine passenden Chargen."
+    },
+    "kpi": {
+      "stock": "Aktueller Bestand",
+      "stockHint": "Über alle Chargen",
+      "weight": "Bestandsgewicht",
+      "volume": "Bestandsvolumen",
+      "volumeHint": "{{value}} % der Kapazität",
+      "value": "Bestandswert",
+      "valueHint": "Gesamtwert des Bestands",
+      "temperature": "Ø Temperatur",
+      "temperatureTarget": "Ziel: 15–20 °C",
+      "humidity": "Ø Luftfeuchtigkeit",
+      "humidityTarget": "Ziel: 50–55 %",
+      "recovery": "Ausbeute",
+      "recoveryMissing": "Von der Übersicht nicht geliefert",
+      "recoveryTarget": "Ziel: mindestens 80 %",
+      "alerts": "Aktive Warnungen",
+      "alertCount_one": "{{value}} Warnung",
+      "alertCount_other": "{{value}} Warnungen",
+      "alertsAttention": "Erfordert Aufmerksamkeit",
+      "alertsNone": "Keine aktiven Warnungen"
+    },
+    "gauge": {
+      "title": "Lagerkapazität",
+      "unavailable": "Keine Kapazitätsdaten verfügbar",
+      "noZone": "Keine Lagerzonen eingerichtet. Legen Sie Zonen an, um die Kapazität zu verfolgen.",
+      "ariaUnavailable": "Gesamtbelegung des Lagers nicht verfügbar",
+      "aria": "Gesamtbelegung des Lagers {{value}} Prozent",
+      "zoneAria": "Kapazität von {{zone}}"
+    },
+    "trend": {
+      "temperature": "Temperaturverlauf",
+      "humidity": "Feuchtigkeitsverlauf",
+      "last24h": "Letzte 24 Stunden",
+      "ago": "Vor 24 Stunden",
+      "now": "Jetzt",
+      "target": "Ziel {{min}}–{{max}} {{unit}}",
+      "noTemperature": "Keine Temperaturmesswerte in den letzten 24 Stunden. Sie erscheinen, sobald die Sensoren melden.",
+      "noHumidity": "Keine Feuchtigkeitsmesswerte in den letzten 24 Stunden. Sie erscheinen, sobald die Sensoren melden."
+    },
+    "alert": {
+      "title": "Aktive Warnung",
+      "none": "Keine aktiven Warnungen",
+      "monitored": "Die Sensorgrenzwerte werden laufend überwacht.",
+      "detected": "{{type}}: Überschreitung erkannt",
+      "defaultMessage": "Grenzwert in einer Lagerzone überschritten.",
+      "details": "Details anzeigen"
+    },
+    "batches": {
+      "title": "Eingelagerte Chargen",
+      "viewAll": "Alle Chargen anzeigen →",
+      "noMatch": "Keine Charge passt zu dieser Suche.",
+      "columns": {
+        "id": "Charge",
+        "product": "Produkt",
+        "quantity": "Menge",
+        "temperature": "Temp.",
+        "humidity": "Feuchte",
+        "status": "Chargenstatus",
+        "updated": "Zuletzt geändert"
+      }
+    },
+    "sensors": {
+      "title": "Umgebungssensoren",
+      "none": "Keine Sensoren in den Lagerzonen registriert.",
+      "online": "Online",
+      "noData": "Keine aktuellen Daten",
+      "humidity": "Feuchtigkeitssensor {{id}}",
+      "temperature": "Temperatursensor {{id}}"
+    }
+  },
+  "zones": {
+    "title": "Lagerzonen",
+    "subtitle": "Kapazität der Zonen prüfen und Lagerflächen hinzufügen.",
+    "loadError": "Die Lagerzonen konnten nicht geladen werden: {{message}}",
+    "empty": "Noch keine Lagerzonen. Legen Sie unten eine an, um hier ihre Kapazität zu sehen.",
+    "tableCaption": "Lagerzonen und ihre Kapazität",
+    "usageLabel": "Belegte Kapazität von {{zone}}",
+    "usedValue": "{{value}} % belegt",
+    "usageUnavailable": "Belegung nicht verfügbar",
+    "columns": {
+      "code": "Code",
+      "name": "Name",
+      "status": "Status",
+      "capacity": "Kapazität",
+      "capacityM3": "Kapazität (m³)",
+      "used": "Belegt"
+    },
+    "form": {
+      "title": "Lagerzone anlegen",
+      "code": "Code",
+      "name": "Name",
+      "capacityKg": "Kapazität (kg)",
+      "status": "Status",
+      "description": "Beschreibung",
+      "submit": "Zone anlegen",
+      "success": "Lagerzone angelegt."
+    }
+  },
+  "batches": {
+    "title": "Chargen",
+    "subtitle": "Chargen des Bestands und Angaben zur Rückverfolgbarkeit.",
+    "loadError": "Die Chargen konnten nicht geladen werden: {{message}}",
+    "empty": "Noch keine Chargen im Bestand. Legen Sie unten eine an.",
+    "tableCaption": "Chargen im Bestand",
+    "columns": {
+      "batchCode": "Chargencode",
+      "product": "Produkt",
+      "variety": "Sorte",
+      "stage": "Stufe",
+      "status": "Status",
+      "currentStock": "Aktueller Bestand",
+      "zone": "Lagerzone",
+      "expiry": "Ablauf"
+    },
+    "form": {
+      "title": "Charge anlegen",
+      "batchCode": "Chargencode",
+      "productType": "Produktart",
+      "productStage": "Produktstufe",
+      "status": "Status",
+      "mangoVariety": "Mangosorte",
+      "varietiesError": "Der Sortenkatalog von Plants konnte nicht geladen werden.",
+      "origin": "Herkunft",
+      "supplierId": "Lieferant",
+      "storageZoneId": "Lagerzone",
+      "initialQuantityKg": "Anfangsmenge (kg)",
+      "currentQuantityKg": "Aktuelle Menge (kg)",
+      "moisturePercent": "Feuchte (%)",
+      "qualityGrade": "Qualitätsstufe",
+      "harvestId": "Ernte-ID in Plants",
+      "harvestDate": "Erntedatum",
+      "processingDate": "Verarbeitungsdatum",
+      "packagingDate": "Verpackungsdatum",
+      "storageEntryDate": "Einlagerungsdatum",
+      "expectedDispatchDate": "Geplantes Versanddatum",
+      "expiryDate": "Ablaufdatum",
+      "customerPriority": "Kundenpriorität",
+      "valuePerKgFcfa": "Wert pro kg (FCFA)",
+      "submit": "Charge anlegen",
+      "success": "Charge angelegt."
+    }
+  },
+  "movements": {
+    "title": "Bestandsbewegungen",
+    "subtitle": "Bewegungsverlauf einer Charge prüfen und Bestandsänderungen erfassen.",
+    "history": "Bewegungsverlauf",
+    "loadError": "Der Bewegungsverlauf konnte nicht geladen werden: {{message}}",
+    "noBatch": "Legen Sie eine Charge an, bevor Sie ihre Bewegungen ansehen oder erfassen.",
+    "noZone": "Keine Lagerzone verfügbar. Legen Sie eine Zone an, bevor Sie Bestand einlagern.",
+    "empty": "Noch keine Bewegungen für diese Charge. Erfassen Sie unten eine, um ihren Verlauf aufzubauen.",
+    "tableCaption": "Bewegungen der gewählten Charge",
+    "columns": {
+      "id": "Nr.",
+      "type": "Bewegungsart",
+      "quantity": "Menge",
+      "fromZone": "Von Zone",
+      "toZone": "Nach Zone",
+      "reason": "Grund",
+      "movedAt": "Bewegt am"
+    },
+    "form": {
+      "title": "Bewegung erfassen",
+      "batch": "Charge",
+      "type": "Bewegungsart",
+      "quantityKg": "Menge (kg)",
+      "targetZone": "Zielzone",
+      "reason": "Grund",
+      "submit": "Bewegung erfassen",
+      "success": "Bewegung erfasst.",
+      "capacityExceeded": "Kapazität der Zone überschritten."
+    }
+  },
+  "alerts": {
+    "title": "Warnungen",
+    "subtitle": "Lagerwarnungen prüfen und ihren Status ändern.",
+    "filter": "Status",
+    "allStatuses": "Alle Status",
+    "loadError": "Die Warnungen konnten nicht geladen werden: {{message}}",
+    "updateError": "Die Warnung konnte nicht geändert werden: {{message}}",
+    "acknowledged": "Warnung bestätigt.",
+    "resolved": "Warnung behoben.",
+    "empty": "Noch keine Warnungen. Sie erscheinen, wenn eine Lagerbedingung Aufmerksamkeit erfordert.",
+    "emptyFiltered": "Keine Warnungen mit dem Status {{status}}. Versuchen Sie einen anderen Filter.",
+    "tableCaption": "Lagerwarnungen",
+    "acknowledge": "Bestätigen",
+    "resolve": "Beheben",
+    "noAction": "Keine Aktion",
+    "columns": {
+      "id": "Nr.",
+      "type": "Warnungsart",
+      "severity": "Schweregrad",
+      "message": "Meldung",
+      "sensor": "Sensor",
+      "raisedAt": "Ausgelöst am",
+      "status": "Status"
+    }
+  },
+  "quality": {
+    "title": "Qualität & Verluste",
+    "subtitle": "Prüfergebnisse und erfasste Bestandsverluste verfolgen.",
+    "checks": "Qualitätsprüfungen",
+    "filter": "Nach Charge filtern",
+    "allBatches": "Alle Chargen",
+    "noBatch": "Noch keine Chargen. Legen Sie eine Charge an, bevor Sie eine Qualitätsprüfung erfassen.",
+    "loadError": "Die Qualitätsprüfungen konnten nicht geladen werden: {{message}}",
+    "empty": "Keine Prüfung passt zu diesem Filter. Erfassen Sie unten eine oder wählen Sie eine andere Charge.",
+    "tableCaption": "Qualitätsprüfungen",
+    "passed": "Bestanden",
+    "failed": "Nicht bestanden",
+    "columns": {
+      "batch": "Charge",
+      "checkedAt": "Geprüft am",
+      "moisture": "Feuchte",
+      "grade": "Stufe",
+      "result": "Ergebnis",
+      "inspector": "Prüfer",
+      "notes": "Notizen"
+    },
+    "form": {
+      "title": "Qualitätsprüfung erfassen",
+      "batch": "Charge",
+      "checkedAt": "Geprüft am",
+      "moisture": "Feuchte (%)",
+      "grade": "Qualitätsstufe",
+      "result": "Ergebnis",
+      "inspector": "Prüfer",
+      "notes": "Notizen",
+      "submit": "Prüfung erfassen",
+      "success": "Qualitätsprüfung erfasst."
+    }
+  },
+  "losses": {
+    "title": "Erfasste Verluste",
+    "loadError": "Die Verluste konnten nicht geladen werden: {{message}}",
+    "empty": "Noch keine Verluste erfasst. Erfassen Sie unten einen, um Bestandsverluste zu verfolgen.",
+    "tableCaption": "Erfasste Verluste",
+    "columns": {
+      "batch": "Charge",
+      "recordedAt": "Erfasst am",
+      "quantity": "Menge",
+      "cause": "Ursache",
+      "value": "Wert"
+    },
+    "form": {
+      "title": "Verlust erfassen",
+      "batch": "Charge",
+      "recordedAt": "Erfasst am",
+      "quantityKg": "Menge (kg)",
+      "value": "Wert (FCFA)",
+      "cause": "Ursache",
+      "submit": "Verlust erfassen",
+      "success": "Verlust erfasst."
+    }
+  },
+  "scenario": {
+    "title": "Szenarioanalyse",
+    "heading": "Was-wäre-wenn-Szenarioanalyse",
+    "subtitle": "Investitionsannahmen und die erwartete Rendite simulieren.",
+    "disclaimerTitle": "Demonstrationssimulation.",
+    "disclaimer": "Alle Werte und Ergebnisse sind vorläufige, nicht validierte Annahmen – keine Messwerte des Betriebs und keine Anlageberatung. Diese Seite rechnet lokal in Ihrem Browser: Sie ändert keine echte Lagerkapazität, schreibt nichts in die Datenbank und löst keine Entscheidung oder Genehmigung aus.",
+    "presets": "Vordefinierte Szenarien",
+    "preset": { "small": "Kleine Erweiterung", "full": "Vollständige Modernisierung", "solar": "Nur Solarstrom" },
+    "hypothesis": "Annahmen",
+    "results": "Ergebnisse",
+    "inputs": {
+      "storage": "Zusätzliche Lagerkapazität",
+      "sensors": "Zusätzliche Sensoren",
+      "cooling": "Kühlung (Kälteanlage)",
+      "coolingHint": "Senkt die Nachernteverluste um 30 % (relativ).",
+      "solar": "Solaranlage",
+      "solarHint": "Spart rund 80 % der jährlichen Stromrechnung."
+    },
+    "assumptionsTitle": "Datenannahmen",
+    "allAssumptions": "Alle von den Formeln verwendeten Annahmen",
+    "assumptions": {
+      "storageCost": "Lagerkosten pro m²",
+      "sensorCost": "Kosten eines Sensors",
+      "mangoValue": "Referenzwert der Mango",
+      "baselineLoss": "Basisverlustrate",
+      "unmetDemand": "Ungedeckter Lagerbedarf",
+      "period": "Betrachtungszeitraum",
+      "coolingInvestment": "Investition Kühlung",
+      "solarInvestment": "Investition Solar",
+      "addedCapacity": "Zusätzliche Kapazität",
+      "sensorEffect": "Wirkung der Sensoren",
+      "coolingEffect": "Wirkung der Kühlung",
+      "electricityBill": "Jährliche Stromrechnung",
+      "solarSaving": "Stromersparnis durch Solar",
+      "referenceSurface": "Genutzte Referenzfläche (fiktiv)",
+      "margin": "Marge auf genutzte Zusatzkapazität",
+      "storageUpkeep": "Instandhaltung Lager",
+      "sensorUpkeep": "Instandhaltung Sensoren",
+      "coolingOperation": "Betrieb Kühlung",
+      "solarUpkeep": "Instandhaltung Solar"
+    },
+    "units": {
+      "m2": "m²",
+      "sensors": "Sensoren",
+      "points": "{{value}} Pkt.",
+      "percent": "{{value}} %",
+      "perTonne": "{{value}} / t",
+      "perYear": "{{value}} / Jahr",
+      "perM2PerYear": "{{value}} / m² / Jahr",
+      "percentOfCostPerYear": "{{value}} % der Kosten / Jahr",
+      "tonnesPerYear": "{{value}} t / Jahr (max.)",
+      "tonnesPerM2": "{{value}} t / m²",
+      "squareMeters": "{{value}} m²",
+      "years": "{{value}} Jahre",
+      "sensorEffect": "−{{value}} Pkt. je Sensor, höchstens {{max}} wirksam",
+      "coolingEffect": "−{{value}} % relativ auf den verbleibenden Verlust"
+    },
+    "formulaNote": "Der jährliche Nettonutzen ist der Bruttonutzen abzüglich der Betriebskosten. Der Break-even ergibt sich aus der Anfangsinvestition und dem jährlichen Nettonutzen.",
+    "basisNote": "Grundlage: vorläufige Demonstrationsannahmen. Eine Validierung mit Betriebsdaten steht noch aus.",
+    "result": {
+      "investment": "Anfangsinvestition",
+      "addedCapacity": "Zusätzliche Kapazität",
+      "usedCapacity": "Erwartete genutzte Kapazität",
+      "lossReduction": "Geschätzte Verlustminderung",
+      "annualCost": "Jährliche Betriebskosten",
+      "grossBenefit": "Jährlicher Bruttonutzen",
+      "netBenefit": "Jährlicher Nettonutzen",
+      "breakEven": "Break-even",
+      "fiveYear": "Nettogewinn nach 5 Jahren",
+      "outlook": "Finanzielle Aussicht"
+    },
+    "resultsNote": "Die Ergebnisse beruhen auf den Annahmen im Bereich Annahmen. Die Verlustminderung ist in Prozentpunkten der Basisrate von {{value}} % angegeben.",
+    "breakEven": {
+      "immediate": "Sofort",
+      "months": "{{months}} Monate ({{years}} Jahre)"
+    },
+    "outlook": {
+      "PROFITABLE_WITHIN_HORIZON": "Rentabel innerhalb von 5 Jahren",
+      "BREAK_EVEN_AFTER_HORIZON": "Break-even nach 5 Jahren",
+      "NOT_FINANCIALLY_VIABLE": "Finanziell nicht tragfähig",
+      "NO_BREAK_EVEN": "Kein Break-even"
+    },
+    "year": "Jahr {{year}}",
+    "chart": {
+      "caption": "Kumulierte Kosten und kumulierter Nutzen (FCFA)",
+      "xAxis": "Projektionsjahr",
+      "yAxis": "Kumulierter Betrag (FCFA)",
+      "cost": "Kumulierte Kosten",
+      "benefit": "Kumulierter Nutzen",
+      "net": "Kumuliert netto",
+      "asTable": "Diagrammwerte als Tabelle",
+      "tableCaption": "Kumulierte Kosten, Nutzen und Nettogewinn je Projektionsjahr, in FCFA",
+      "yearColumn": "Jahr"
+    },
+    "summary": {
+      "show": "Zusammenfassung anzeigen",
+      "note": "Zeigt eine vorübergehende Zusammenfassung auf dem Bildschirm; es wird keine Datei heruntergeladen.",
+      "label": "Szenariozusammenfassung",
+      "title": "Zusammenfassung (Simulation)",
+      "text": "Investition: {{investment}} · Betriebskosten: {{cost}}/Jahr · Nettonutzen: {{net}}/Jahr · Break-even: {{breakEven}} · Netto nach 5 Jahren: {{fiveYear}} · Aussicht: {{outlook}}"
+    }
+  }
+}
