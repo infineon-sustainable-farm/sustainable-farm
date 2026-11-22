@@ -1,16 +1,15 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import i18n from './i18n'
 import { availableLanguages, namespaces, resources } from './resources'
+import { collectModules } from '../../app/modules'
+import { loadRealModuleFiles } from '../../test/appFixtures'
 
-const MODULES = [
-  'machinery',
-  'plants',
-  'producttransformation',
-  'energysupply',
-  'watersupply',
-  'salesmarketing',
-  'visitormanagement',
-]
+// Generic on purpose: every integrated module (one that exports a `nav` from its routes.jsx) has
+// its own namespace, so a new module ships its translations without touching this test.
+const MODULES = collectModules(await loadRealModuleFiles())
+  .map((module) => module.nav?.id)
+  .filter(Boolean)
 
 describe('i18n setup', () => {
   it('has common and one namespace per module in the three languages, English bundled', () => {
