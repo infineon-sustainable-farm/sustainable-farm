@@ -67,6 +67,9 @@
       "LOW": "Low"
     }
   },
+  "varieties": {
+    "OTHER": "Other"
+  },
   "overview": {
     "title": "Crop Storage Dashboard",
     "subtitle": "Stock, capacity and storage conditions",

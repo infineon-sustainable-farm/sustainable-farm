@@ -224,7 +224,7 @@ export function ActiveAlertPanel({ alerts = [], to }) {
 
 export function BatchesMiniTable({ batches = [], zoneClimates = {}, zoneKeyOf, search = "", viewAllTo, tableRef }) {
     const { t } = useTranslation("cropstorage");
-    const rows = findMatchingBatches(batches, search).slice(0, 5);
+    const rows = findMatchingBatches(batches, search, t).slice(0, 5);
 
     return (
         <section ref={tableRef} className="min-w-0 rounded-card border border-border-subtle bg-surface-raised p-5 shadow-raised lg:col-span-2">

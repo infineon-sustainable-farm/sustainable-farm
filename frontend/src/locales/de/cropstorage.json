@@ -26,14 +26,49 @@
     "generic": "Nicht gespeichert. Bitte erneut versuchen."
   },
   "enums": {
-    "batchStatus": { "STORED": "Eingelagert", "DISPATCHED": "Versandt" },
-    "operationalStatus": { "ACTIVE": "Aktiv", "MAINTENANCE": "Wartung", "INACTIVE": "Inaktiv" },
-    "productType": { "FRESH_MANGO": "Frische Mango", "DRIED_MANGO": "Getrocknete Mango" },
-    "productStage": { "FRESH": "Frisch", "DRIED": "Getrocknet", "PACKAGED": "Verpackt", "WASTE": "Ausschuss", "RETURNED": "Zurückgegeben" },
-    "movementType": { "IN": "Eingang", "OUT": "Ausgang", "TRANSFER": "Umlagerung" },
-    "alertStatus": { "ACTIVE": "Aktiv", "ACKNOWLEDGED": "Bestätigt", "RESOLVED": "Behoben" },
-    "alertType": { "TEMPERATURE": "Temperatur", "HUMIDITY": "Luftfeuchtigkeit", "DAMAGE": "Schaden" },
-    "severity": { "HIGH": "Hoch", "MEDIUM": "Mittel", "LOW": "Niedrig" }
+    "batchStatus": {
+      "STORED": "Eingelagert",
+      "DISPATCHED": "Versandt"
+    },
+    "operationalStatus": {
+      "ACTIVE": "Aktiv",
+      "MAINTENANCE": "Wartung",
+      "INACTIVE": "Inaktiv"
+    },
+    "productType": {
+      "FRESH_MANGO": "Frische Mango",
+      "DRIED_MANGO": "Getrocknete Mango"
+    },
+    "productStage": {
+      "FRESH": "Frisch",
+      "DRIED": "Getrocknet",
+      "PACKAGED": "Verpackt",
+      "WASTE": "Ausschuss",
+      "RETURNED": "Zurückgegeben"
+    },
+    "movementType": {
+      "IN": "Eingang",
+      "OUT": "Ausgang",
+      "TRANSFER": "Umlagerung"
+    },
+    "alertStatus": {
+      "ACTIVE": "Aktiv",
+      "ACKNOWLEDGED": "Bestätigt",
+      "RESOLVED": "Behoben"
+    },
+    "alertType": {
+      "TEMPERATURE": "Temperatur",
+      "HUMIDITY": "Luftfeuchtigkeit",
+      "DAMAGE": "Schaden"
+    },
+    "severity": {
+      "HIGH": "Hoch",
+      "MEDIUM": "Mittel",
+      "LOW": "Niedrig"
+    }
+  },
+  "varieties": {
+    "OTHER": "Andere"
   },
   "overview": {
     "title": "Erntelager-Dashboard",
@@ -308,7 +343,11 @@
     "disclaimerTitle": "Demonstrationssimulation.",
     "disclaimer": "Alle Werte und Ergebnisse sind vorläufige, nicht validierte Annahmen – keine Messwerte des Betriebs und keine Anlageberatung. Diese Seite rechnet lokal in Ihrem Browser: Sie ändert keine echte Lagerkapazität, schreibt nichts in die Datenbank und löst keine Entscheidung oder Genehmigung aus.",
     "presets": "Vordefinierte Szenarien",
-    "preset": { "small": "Kleine Erweiterung", "full": "Vollständige Modernisierung", "solar": "Nur Solarstrom" },
+    "preset": {
+      "small": "Kleine Erweiterung",
+      "full": "Vollständige Modernisierung",
+      "solar": "Nur Solarstrom"
+    },
     "hypothesis": "Annahmen",
     "results": "Ergebnisse",
     "inputs": {

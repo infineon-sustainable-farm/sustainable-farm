@@ -26,14 +26,49 @@
     "generic": "Non enregistré. Veuillez réessayer."
   },
   "enums": {
-    "batchStatus": { "STORED": "En stock", "DISPATCHED": "Expédié" },
-    "operationalStatus": { "ACTIVE": "Active", "MAINTENANCE": "Maintenance", "INACTIVE": "Inactive" },
-    "productType": { "FRESH_MANGO": "Mangue fraîche", "DRIED_MANGO": "Mangue séchée" },
-    "productStage": { "FRESH": "Frais", "DRIED": "Séché", "PACKAGED": "Emballé", "WASTE": "Rebut", "RETURNED": "Retourné" },
-    "movementType": { "IN": "Entrée", "OUT": "Sortie", "TRANSFER": "Transfert" },
-    "alertStatus": { "ACTIVE": "Active", "ACKNOWLEDGED": "Prise en compte", "RESOLVED": "Résolue" },
-    "alertType": { "TEMPERATURE": "Température", "HUMIDITY": "Humidité", "DAMAGE": "Dommage" },
-    "severity": { "HIGH": "Élevée", "MEDIUM": "Moyenne", "LOW": "Faible" }
+    "batchStatus": {
+      "STORED": "En stock",
+      "DISPATCHED": "Expédié"
+    },
+    "operationalStatus": {
+      "ACTIVE": "Active",
+      "MAINTENANCE": "Maintenance",
+      "INACTIVE": "Inactive"
+    },
+    "productType": {
+      "FRESH_MANGO": "Mangue fraîche",
+      "DRIED_MANGO": "Mangue séchée"
+    },
+    "productStage": {
+      "FRESH": "Frais",
+      "DRIED": "Séché",
+      "PACKAGED": "Emballé",
+      "WASTE": "Rebut",
+      "RETURNED": "Retourné"
+    },
+    "movementType": {
+      "IN": "Entrée",
+      "OUT": "Sortie",
+      "TRANSFER": "Transfert"
+    },
+    "alertStatus": {
+      "ACTIVE": "Active",
+      "ACKNOWLEDGED": "Prise en compte",
+      "RESOLVED": "Résolue"
+    },
+    "alertType": {
+      "TEMPERATURE": "Température",
+      "HUMIDITY": "Humidité",
+      "DAMAGE": "Dommage"
+    },
+    "severity": {
+      "HIGH": "Élevée",
+      "MEDIUM": "Moyenne",
+      "LOW": "Faible"
+    }
+  },
+  "varieties": {
+    "OTHER": "Autre"
   },
   "overview": {
     "title": "Tableau de bord du stockage",
@@ -308,7 +343,11 @@
     "disclaimerTitle": "Simulation de démonstration.",
     "disclaimer": "Toutes les valeurs et tous les résultats sont des hypothèses provisoires, non validées : ce ne sont ni des mesures de la ferme ni un conseil d'investissement. Cette page calcule localement dans votre navigateur : elle ne modifie aucune capacité de stockage réelle, n'écrit rien en base de données et ne déclenche aucune décision ni autorisation.",
     "presets": "Scénarios prédéfinis",
-    "preset": { "small": "Petite extension", "full": "Modernisation complète", "solar": "Solaire seul" },
+    "preset": {
+      "small": "Petite extension",
+      "full": "Modernisation complète",
+      "solar": "Solaire seul"
+    },
     "hypothesis": "Hypothèses",
     "results": "Résultats",
     "inputs": {

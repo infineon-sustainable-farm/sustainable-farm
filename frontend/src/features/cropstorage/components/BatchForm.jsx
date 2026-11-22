@@ -4,6 +4,7 @@ import { Button, Card, Field, Input, OwnedResourceSelect, Select } from "../../.
 import { OWNER_LINKS } from "../../../app/ownerLinks";
 import { BATCH_STATUSES, GROUP, PRODUCT_STAGES, PRODUCT_TYPES, enumOptions } from "../utils/enums";
 import { toBatchPayload } from "../utils/batchPayload";
+import { varietyLabel } from "../utils/varieties";
 import FormMessage from "./FormMessage";
 
 const INITIAL_VALUES = {
@@ -120,7 +121,7 @@ export default function BatchForm({
                     onChange={(value) => update("mangoVariety", value)}
                     options={varieties.data ?? []}
                     getOptionValue={(variety) => variety.varietyName}
-                    getOptionLabel={(variety) => variety.varietyName}
+                    getOptionLabel={(variety) => varietyLabel(t, variety.varietyKey, variety.varietyName)}
                     loading={varieties.isPending}
                     loadError={varieties.isError ? t("batches.form.varietiesError") : undefined}
                     onRetry={varieties.refetch}

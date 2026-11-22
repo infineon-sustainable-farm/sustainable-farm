@@ -196,8 +196,8 @@ export default function CropStoragePage() {
     const totalEur = summary.totalValueEur ?? summary.total_value_eur ?? summary.valueEur;
     const totalUsd = summary.totalValueUsd ?? summary.total_value_usd ?? summary.valueUsd;
     const batchSuggestions = useMemo(
-        () => findMatchingBatches(data?.batches ?? [], batchSearch),
-        [data?.batches, batchSearch],
+        () => findMatchingBatches(data?.batches ?? [], batchSearch, t),
+        [data?.batches, batchSearch, t],
     );
 
     function selectBatch(batch) {

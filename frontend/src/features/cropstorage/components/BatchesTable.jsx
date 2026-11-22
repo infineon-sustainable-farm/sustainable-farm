@@ -2,13 +2,14 @@ import { useTranslation } from "react-i18next";
 import { Table } from "../../../shared/ui";
 import { GROUP, enumLabel } from "../utils/enums";
 import { EMPTY, formatDate, formatQuantity } from "../utils/formatters";
+import { varietyLabel } from "../utils/varieties";
 
 export default function BatchesTable({ batches }) {
     const { t } = useTranslation("cropstorage");
     const columns = [
         { key: "batchCode", header: t("batches.columns.batchCode"), sortable: true },
         { key: "productType", header: t("batches.columns.product"), cell: (b) => enumLabel(t, GROUP.productType, b.productType) },
-        { key: "mangoVariety", header: t("batches.columns.variety"), cell: (b) => b.mangoVariety ?? EMPTY },
+        { key: "mangoVariety", header: t("batches.columns.variety"), cell: (b) => varietyLabel(t, b.varietyKey, b.mangoVariety) ?? EMPTY },
         { key: "productStage", header: t("batches.columns.stage"), cell: (b) => enumLabel(t, GROUP.productStage, b.productStage) },
         { key: "status", header: t("batches.columns.status"), cell: (b) => enumLabel(t, GROUP.batchStatus, b.status) },
         {

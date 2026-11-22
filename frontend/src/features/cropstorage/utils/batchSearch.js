@@ -1,3 +1,5 @@
+import { varietyLabel } from "./varieties";
+
 export function getBatchDisplayId(batch) {
     const batchCode = batch.batchCode ?? batch.batch_code;
     if (batchCode != null && String(batchCode).trim()) return String(batchCode);
@@ -11,12 +13,13 @@ export function getBatchDisplayId(batch) {
 export function getBatchProductLabel(batch, t) {
     const type = batch.productType ?? batch.product_type;
     const typeLabel = type && t ? t(`enums.productType.${type}`, { defaultValue: type }) : type;
-    const variety = batch.mangoVariety ?? batch.productName ?? batch.product?.name ?? batch.cropType;
+    const variety = varietyLabel(t, batch.varietyKey, batch.mangoVariety) ?? batch.productName ?? batch.product?.name ?? batch.cropType;
     const parts = [variety, typeLabel].filter(Boolean);
     return parts.length ? parts.join(" · ") : "—";
 }
 
-export function findMatchingBatches(batches, search) {
+/** Batches matching the search; with t, the translated labels match too. */
+export function findMatchingBatches(batches, search, t) {
     const query = search.trim().toLowerCase();
     if (!query) return batches;
 
@@ -28,6 +31,7 @@ export function findMatchingBatches(batches, search) {
                 batch.batchCode,
                 batch.batch_code,
                 getBatchProductLabel(batch),
+                t ? getBatchProductLabel(batch, t) : null,
             ]
                 .filter((value) => value != null)
                 .join(" ")
