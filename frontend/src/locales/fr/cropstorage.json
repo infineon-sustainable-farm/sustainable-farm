@@ -1,0 +1,445 @@
+{
+  "name": "Stockage des récoltes",
+  "pageTitle": "{{screen}} — Stockage des récoltes",
+  "percent": "{{value}} %",
+  "nav": {
+    "overview": "Vue d'ensemble",
+    "zones": "Zones",
+    "batches": "Lots",
+    "movements": "Mouvements",
+    "alerts": "Alertes",
+    "quality": "Qualité et pertes",
+    "scenarioAnalysis": "Analyse de scénarios"
+  },
+  "units": {
+    "celsius": "{{value}} °C",
+    "tonnes": "{{value}} t",
+    "pounds": "{{value}} lb",
+    "cubicMeters": "{{value}} m³"
+  },
+  "form": {
+    "choose": "Choisir…",
+    "none": "Aucun"
+  },
+  "errors": {
+    "submit": "Non enregistré : {{message}}",
+    "generic": "Non enregistré. Veuillez réessayer."
+  },
+  "enums": {
+    "batchStatus": {
+      "STORED": "En stock",
+      "DISPATCHED": "Expédié"
+    },
+    "operationalStatus": {
+      "ACTIVE": "Active",
+      "MAINTENANCE": "Maintenance",
+      "INACTIVE": "Inactive"
+    },
+    "productType": {
+      "FRESH_MANGO": "Mangue fraîche",
+      "DRIED_MANGO": "Mangue séchée"
+    },
+    "productStage": {
+      "FRESH": "Frais",
+      "DRIED": "Séché",
+      "PACKAGED": "Emballé",
+      "WASTE": "Rebut",
+      "RETURNED": "Retourné"
+    },
+    "movementType": {
+      "IN": "Entrée",
+      "OUT": "Sortie",
+      "TRANSFER": "Transfert"
+    },
+    "alertStatus": {
+      "ACTIVE": "Active",
+      "ACKNOWLEDGED": "Prise en compte",
+      "RESOLVED": "Résolue"
+    },
+    "alertType": {
+      "TEMPERATURE": "Température",
+      "HUMIDITY": "Humidité",
+      "DAMAGE": "Dommage"
+    },
+    "severity": {
+      "HIGH": "Élevée",
+      "MEDIUM": "Moyenne",
+      "LOW": "Faible"
+    }
+  },
+  "varieties": {
+    "OTHER": "Autre"
+  },
+  "overview": {
+    "title": "Tableau de bord du stockage",
+    "subtitle": "Stock, capacité et conditions de stockage",
+    "loadError": "Le tableau de bord du stockage n'a pas pu être chargé : {{message}}",
+    "openAlerts": "Ouvrir les alertes",
+    "kpiLabel": "Indicateurs clés de l'inventaire",
+    "search": {
+      "placeholder": "Rechercher par identifiant ou produit",
+      "label": "Filtrer les lots stockés",
+      "listLabel": "Lots correspondants",
+      "noMatch": "Aucun lot correspondant."
+    },
+    "kpi": {
+      "stock": "Stock actuel",
+      "stockHint": "Tous lots confondus",
+      "weight": "Poids du stock",
+      "volume": "Volume du stock",
+      "volumeHint": "{{value}} % de la capacité",
+      "value": "Valeur de l'inventaire",
+      "valueHint": "Valeur totale de l'inventaire",
+      "temperature": "Température moyenne",
+      "temperatureTarget": "Cible : 15–20 °C",
+      "humidity": "Humidité moyenne",
+      "humidityTarget": "Cible : 50–55 %",
+      "recovery": "Taux de récupération",
+      "recoveryMissing": "Non fourni par le résumé",
+      "recoveryTarget": "Cible : au moins 80 %",
+      "alerts": "Alertes actives",
+      "alertCount_one": "{{value}} alerte",
+      "alertCount_other": "{{value}} alertes",
+      "alertsAttention": "À traiter",
+      "alertsNone": "Aucune alerte active"
+    },
+    "gauge": {
+      "title": "Capacité de stockage",
+      "unavailable": "Données de capacité indisponibles",
+      "noZone": "Aucune zone de stockage configurée. Ajoutez des zones pour suivre la capacité.",
+      "ariaUnavailable": "Occupation globale du stockage indisponible",
+      "aria": "Occupation globale du stockage : {{value}} pour cent",
+      "zoneAria": "Capacité de {{zone}}"
+    },
+    "trend": {
+      "temperature": "Évolution de la température",
+      "humidity": "Évolution de l'humidité",
+      "last24h": "Dernières 24 heures",
+      "ago": "Il y a 24 heures",
+      "now": "Maintenant",
+      "target": "Cible {{min}}–{{max}} {{unit}}",
+      "noTemperature": "Aucune mesure de température sur les dernières 24 heures. Elles apparaîtront quand les capteurs les enverront.",
+      "noHumidity": "Aucune mesure d'humidité sur les dernières 24 heures. Elles apparaîtront quand les capteurs les enverront."
+    },
+    "alert": {
+      "title": "Alerte active",
+      "none": "Aucune alerte active",
+      "monitored": "Les seuils des capteurs sont surveillés en continu.",
+      "detected": "{{type}} : dépassement détecté",
+      "defaultMessage": "Seuil dépassé dans une zone de stockage.",
+      "details": "Voir le détail"
+    },
+    "batches": {
+      "title": "Lots stockés",
+      "viewAll": "Voir tous les lots →",
+      "noMatch": "Aucun lot ne correspond à cette recherche.",
+      "columns": {
+        "id": "Lot",
+        "product": "Produit",
+        "quantity": "Quantité",
+        "temperature": "Temp.",
+        "humidity": "Humidité",
+        "status": "Statut du lot",
+        "updated": "Mis à jour"
+      }
+    },
+    "sensors": {
+      "title": "Capteurs d'ambiance",
+      "none": "Aucun capteur enregistré dans les zones de stockage.",
+      "online": "En ligne",
+      "noData": "Pas de donnée récente",
+      "humidity": "Capteur d'humidité {{id}}",
+      "temperature": "Capteur de température {{id}}"
+    }
+  },
+  "zones": {
+    "title": "Zones de stockage",
+    "subtitle": "Consultez la capacité des zones et ajoutez des espaces de stockage.",
+    "loadError": "Les zones de stockage n'ont pas pu être chargées : {{message}}",
+    "empty": "Aucune zone de stockage. Créez-en une ci-dessous pour voir sa capacité ici.",
+    "tableCaption": "Zones de stockage et leur capacité",
+    "usageLabel": "Capacité utilisée de {{zone}}",
+    "usedValue": "{{value}} % utilisés",
+    "usageUnavailable": "Occupation indisponible",
+    "columns": {
+      "code": "Code",
+      "name": "Nom",
+      "status": "Statut",
+      "capacity": "Capacité",
+      "capacityM3": "Capacité (m³)",
+      "used": "Occupation"
+    },
+    "form": {
+      "title": "Créer une zone de stockage",
+      "code": "Code",
+      "name": "Nom",
+      "capacityKg": "Capacité (kg)",
+      "status": "Statut",
+      "description": "Description",
+      "submit": "Créer la zone",
+      "success": "Zone de stockage créée."
+    }
+  },
+  "batches": {
+    "title": "Lots",
+    "subtitle": "Lots de l'inventaire et informations de traçabilité.",
+    "loadError": "Les lots n'ont pas pu être chargés : {{message}}",
+    "empty": "Aucun lot dans l'inventaire. Créez-en un ci-dessous pour commencer.",
+    "tableCaption": "Lots de l'inventaire",
+    "columns": {
+      "batchCode": "Code du lot",
+      "product": "Produit",
+      "variety": "Variété",
+      "stage": "Étape",
+      "status": "Statut",
+      "currentStock": "Stock actuel",
+      "zone": "Zone de stockage",
+      "expiry": "Péremption"
+    },
+    "form": {
+      "title": "Créer un lot",
+      "batchCode": "Code du lot",
+      "productType": "Type de produit",
+      "productStage": "Étape du produit",
+      "status": "Statut",
+      "mangoVariety": "Variété de mangue",
+      "varietiesError": "Le catalogue des variétés de Plants n'a pas pu être chargé.",
+      "origin": "Origine",
+      "supplierId": "Fournisseur",
+      "storageZoneId": "Zone de stockage",
+      "initialQuantityKg": "Quantité initiale (kg)",
+      "currentQuantityKg": "Quantité actuelle (kg)",
+      "moisturePercent": "Humidité (%)",
+      "qualityGrade": "Grade de qualité",
+      "harvestId": "Identifiant de récolte Plants",
+      "harvestDate": "Date de récolte",
+      "processingDate": "Date de transformation",
+      "packagingDate": "Date d'emballage",
+      "storageEntryDate": "Date d'entrée en stock",
+      "expectedDispatchDate": "Date d'expédition prévue",
+      "expiryDate": "Date de péremption",
+      "customerPriority": "Priorité client",
+      "valuePerKgFcfa": "Valeur au kg (FCFA)",
+      "submit": "Créer le lot",
+      "success": "Lot créé."
+    }
+  },
+  "movements": {
+    "title": "Mouvements de stock",
+    "subtitle": "Consultez l'historique des mouvements d'un lot et enregistrez les changements de stock.",
+    "history": "Historique des mouvements",
+    "loadError": "L'historique des mouvements n'a pas pu être chargé : {{message}}",
+    "noBatch": "Créez un lot avant de consulter ou d'enregistrer ses mouvements.",
+    "noZone": "Aucune zone de stockage disponible. Créez une zone avant d'y faire entrer du stock.",
+    "empty": "Aucun mouvement pour ce lot. Enregistrez-en un ci-dessous pour constituer son historique.",
+    "tableCaption": "Mouvements du lot sélectionné",
+    "columns": {
+      "id": "N°",
+      "type": "Type de mouvement",
+      "quantity": "Quantité",
+      "fromZone": "Zone de départ",
+      "toZone": "Zone d'arrivée",
+      "reason": "Motif",
+      "movedAt": "Date du mouvement"
+    },
+    "form": {
+      "title": "Enregistrer un mouvement",
+      "batch": "Lot",
+      "type": "Type de mouvement",
+      "quantityKg": "Quantité (kg)",
+      "targetZone": "Zone de destination",
+      "reason": "Motif",
+      "submit": "Enregistrer le mouvement",
+      "success": "Mouvement enregistré.",
+      "capacityExceeded": "Capacité de la zone dépassée."
+    }
+  },
+  "alerts": {
+    "title": "Alertes",
+    "subtitle": "Consultez les alertes de stockage et mettez à jour leur statut.",
+    "filter": "Statut",
+    "allStatuses": "Tous les statuts",
+    "loadError": "Les alertes n'ont pas pu être chargées : {{message}}",
+    "updateError": "L'alerte n'a pas pu être mise à jour : {{message}}",
+    "acknowledged": "Alerte prise en compte.",
+    "resolved": "Alerte résolue.",
+    "empty": "Aucune alerte. Les alertes apparaîtront quand une condition de stockage demandera une action.",
+    "emptyFiltered": "Aucune alerte au statut {{status}}. Essayez un autre filtre.",
+    "tableCaption": "Alertes de stockage",
+    "acknowledge": "Prendre en compte",
+    "resolve": "Résoudre",
+    "noAction": "Aucune action",
+    "columns": {
+      "id": "N°",
+      "type": "Type d'alerte",
+      "severity": "Gravité",
+      "message": "Message",
+      "sensor": "Capteur",
+      "raisedAt": "Déclenchée le",
+      "status": "Statut"
+    }
+  },
+  "quality": {
+    "title": "Qualité et pertes",
+    "subtitle": "Suivez les résultats des contrôles et les pertes d'inventaire enregistrées.",
+    "checks": "Contrôles qualité",
+    "filter": "Filtrer par lot",
+    "allBatches": "Tous les lots",
+    "noBatch": "Aucun lot. Créez un lot avant d'enregistrer un contrôle qualité.",
+    "loadError": "Les contrôles qualité n'ont pas pu être chargés : {{message}}",
+    "empty": "Aucun contrôle ne correspond à ce filtre. Ajoutez un contrôle ci-dessous ou choisissez un autre lot.",
+    "tableCaption": "Contrôles qualité",
+    "passed": "Conforme",
+    "failed": "Non conforme",
+    "columns": {
+      "batch": "Lot",
+      "checkedAt": "Contrôlé le",
+      "moisture": "Humidité",
+      "grade": "Grade",
+      "result": "Résultat",
+      "inspector": "Contrôleur",
+      "notes": "Notes"
+    },
+    "form": {
+      "title": "Ajouter un contrôle qualité",
+      "batch": "Lot",
+      "checkedAt": "Contrôlé le",
+      "moisture": "Humidité (%)",
+      "grade": "Grade de qualité",
+      "result": "Résultat",
+      "inspector": "Contrôleur",
+      "notes": "Notes",
+      "submit": "Ajouter le contrôle",
+      "success": "Contrôle qualité créé."
+    }
+  },
+  "losses": {
+    "title": "Pertes enregistrées",
+    "loadError": "Les pertes n'ont pas pu être chargées : {{message}}",
+    "empty": "Aucune perte enregistrée. Ajoutez-en une ci-dessous pour suivre les pertes d'inventaire.",
+    "tableCaption": "Pertes enregistrées",
+    "columns": {
+      "batch": "Lot",
+      "recordedAt": "Enregistrée le",
+      "quantity": "Quantité",
+      "cause": "Cause",
+      "value": "Valeur"
+    },
+    "form": {
+      "title": "Ajouter une perte",
+      "batch": "Lot",
+      "recordedAt": "Enregistrée le",
+      "quantityKg": "Quantité (kg)",
+      "value": "Valeur (FCFA)",
+      "cause": "Cause",
+      "submit": "Ajouter la perte",
+      "success": "Perte enregistrée."
+    }
+  },
+  "scenario": {
+    "title": "Analyse de scénarios",
+    "heading": "Analyse de scénarios « et si »",
+    "subtitle": "Simulez des hypothèses d'investissement et le retour sur investissement projeté.",
+    "disclaimerTitle": "Simulation de démonstration.",
+    "disclaimer": "Toutes les valeurs et tous les résultats sont des hypothèses provisoires, non validées : ce ne sont ni des mesures de la ferme ni un conseil d'investissement. Cette page calcule localement dans votre navigateur : elle ne modifie aucune capacité de stockage réelle, n'écrit rien en base de données et ne déclenche aucune décision ni autorisation.",
+    "presets": "Scénarios prédéfinis",
+    "preset": {
+      "small": "Petite extension",
+      "full": "Modernisation complète",
+      "solar": "Solaire seul"
+    },
+    "hypothesis": "Hypothèses",
+    "results": "Résultats",
+    "inputs": {
+      "storage": "Capacité de stockage supplémentaire",
+      "sensors": "Capteurs supplémentaires",
+      "cooling": "Ajout du froid (réfrigération)",
+      "coolingHint": "Réduit les pertes après récolte de 30 % (en relatif).",
+      "solar": "Installation solaire",
+      "solarHint": "Économise environ 80 % de la facture d'électricité annuelle."
+    },
+    "assumptionsTitle": "Hypothèses de données",
+    "allAssumptions": "Toutes les hypothèses utilisées par les formules",
+    "assumptions": {
+      "storageCost": "Coût du stockage par m²",
+      "sensorCost": "Coût d'un capteur",
+      "mangoValue": "Valeur de référence de la mangue",
+      "baselineLoss": "Taux de perte de référence",
+      "unmetDemand": "Demande de stockage non couverte",
+      "period": "Période d'analyse",
+      "coolingInvestment": "Investissement froid",
+      "solarInvestment": "Investissement solaire",
+      "addedCapacity": "Capacité ajoutée",
+      "sensorEffect": "Effet des capteurs",
+      "coolingEffect": "Effet du froid",
+      "electricityBill": "Facture d'électricité annuelle",
+      "solarSaving": "Économie d'électricité solaire",
+      "referenceSurface": "Surface utilisée de référence (fictive)",
+      "margin": "Marge sur la capacité ajoutée utilisée",
+      "storageUpkeep": "Entretien du stockage",
+      "sensorUpkeep": "Entretien des capteurs",
+      "coolingOperation": "Fonctionnement du froid",
+      "solarUpkeep": "Entretien du solaire"
+    },
+    "units": {
+      "m2": "m²",
+      "sensors": "capteurs",
+      "points": "{{value}} pts",
+      "percent": "{{value}} %",
+      "perTonne": "{{value}} / t",
+      "perYear": "{{value}} / an",
+      "perM2PerYear": "{{value}} / m² / an",
+      "percentOfCostPerYear": "{{value}} % du coût / an",
+      "tonnesPerYear": "{{value}} t / an (max.)",
+      "tonnesPerM2": "{{value}} t / m²",
+      "squareMeters": "{{value}} m²",
+      "years": "{{value}} ans",
+      "sensorEffect": "−{{value}} pt chacun, {{max}} au plus pris en compte",
+      "coolingEffect": "−{{value}} % en relatif sur la perte restante"
+    },
+    "formulaNote": "Le bénéfice net annuel est le bénéfice brut moins le coût de fonctionnement. Le point mort se calcule à partir de l'investissement initial et du bénéfice net annuel.",
+    "basisNote": "Base : hypothèses de démonstration provisoires. Une validation avec des données réelles de la ferme reste nécessaire.",
+    "result": {
+      "investment": "Investissement initial",
+      "addedCapacity": "Capacité supplémentaire",
+      "usedCapacity": "Capacité utilisée attendue",
+      "lossReduction": "Réduction des pertes estimée",
+      "annualCost": "Coût de fonctionnement annuel",
+      "grossBenefit": "Bénéfice brut annuel",
+      "netBenefit": "Bénéfice net annuel",
+      "breakEven": "Point mort",
+      "fiveYear": "Gain net à 5 ans",
+      "outlook": "Perspective financière"
+    },
+    "resultsNote": "Les résultats sont calculés à partir des hypothèses du panneau Hypothèses. La réduction des pertes est exprimée en points de pourcentage du taux de référence de {{value}} %.",
+    "breakEven": {
+      "immediate": "Immédiat",
+      "months": "{{months}} mois ({{years}} ans)"
+    },
+    "outlook": {
+      "PROFITABLE_WITHIN_HORIZON": "Rentable en moins de 5 ans",
+      "BREAK_EVEN_AFTER_HORIZON": "Point mort au-delà de 5 ans",
+      "NOT_FINANCIALLY_VIABLE": "Non viable financièrement",
+      "NO_BREAK_EVEN": "Pas de point mort"
+    },
+    "year": "Année {{year}}",
+    "chart": {
+      "caption": "Coût cumulé et bénéfice cumulé (FCFA)",
+      "xAxis": "Année de projection",
+      "yAxis": "Montant cumulé (FCFA)",
+      "cost": "Coût cumulé",
+      "benefit": "Bénéfice cumulé",
+      "net": "Net cumulé",
+      "asTable": "Valeurs du graphique en tableau",
+      "tableCaption": "Coût, bénéfice et gain net cumulés par année de projection, en FCFA",
+      "yearColumn": "Année"
+    },
+    "summary": {
+      "show": "Afficher le résumé",
+      "note": "Affiche un résumé temporaire à l'écran ; aucun fichier n'est téléchargé.",
+      "label": "Résumé du scénario",
+      "title": "Résumé (simulation)",
+      "text": "Investissement : {{investment}} · Coût de fonctionnement : {{cost}}/an · Bénéfice net : {{net}}/an · Point mort : {{breakEven}} · Net à 5 ans : {{fiveYear}} · Perspective : {{outlook}}"
+    }
+  }
+}
