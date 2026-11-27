@@ -24,6 +24,8 @@
 #        backend/src/main/resources/seed/<module>-*  or  <module>_*
 #        frontend/src/features/<module>/
 #        frontend/src/locales/<en|de|fr>/<module>.json (the module's translations)
+#      plus, in backend/src/test/resources/archunit_store/, the removal of frozen
+#      ArchUnit violations of the module (the owner fixed them); adding a line is refused;
 #      plus NEW Flyway migrations named V<n>__<module>_<description>.sql
 #      (existing migrations are never edited: Flyway checksums);
 #   - everything else (docs, scripts, .github, core/, shared/, pom.xml,
@@ -155,7 +157,27 @@ path_allowed() { # <status> <path>
     if [ "$status" = "A" ] && [[ "$p" =~ ^backend/src/main/resources/db/migration/V[0-9_]+__${M}_[a-z0-9_]+\.sql$ ]]; then
         return 0
     fi
+    if [ "$status" = "M" ] && [[ "$p" =~ ^backend/src/test/resources/archunit_store/[0-9a-f-]+$ ]] \
+        && frozen_lines_only_removed_for_module "$p" "$M"; then
+        return 0
+    fi
     return 1
+}
+
+# A frozen ArchUnit violation file may only lose lines, and only lines about the module: the
+# owner fixed those violations. ArchUnit refuses a stale store (allowStoreUpdate=false).
+frozen_lines_only_removed_for_module() { # <path> <module>
+    local p="$1" M="$2" line
+    local changes
+    changes=$(git diff --no-renames -U0 "$MERGE_BASE" "$HEAD_REF" -- "$p" | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ')
+    [ -n "$changes" ] || return 1
+    while IFS= read -r line; do
+        case "$line" in
+            -*".sustainablefarm.modules.$M."*) ;;
+            *) return 1 ;;
+        esac
+    done <<< "$changes"
+    return 0
 }
 
 if [ "$IS_ADMIN" -eq 0 ] && [ -n "$MODULE" ]; then
