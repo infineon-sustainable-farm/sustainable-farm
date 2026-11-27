@@ -9,6 +9,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Base JPA superclass shared across all modules.
@@ -32,14 +33,23 @@ public abstract class BaseEntity {
 
     @PrePersist
     protected void onCreate() {
-        Instant now = Instant.now();
+        Instant now = now();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = Instant.now();
+        this.updatedAt = now();
+    }
+
+    /**
+     * The current instant at the microsecond precision PostgreSQL keeps: the value held in memory
+     * (and returned by a create call) is then the value a later read returns. The clock can give
+     * nanoseconds, which PostgreSQL would round.
+     */
+    private static Instant now() {
+        return Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     public Long getId() {
