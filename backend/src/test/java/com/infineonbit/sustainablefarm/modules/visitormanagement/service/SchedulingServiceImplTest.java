@@ -57,11 +57,15 @@ class SchedulingServiceImplTest {
     @InjectMocks
     private SchedulingServiceImpl service;
 
+    /** First open day from tomorrow: the farm is closed on SchedulingRules.CLOSED_DAY. */
     private LocalDate monday;
 
     @BeforeEach
     void setUp() {
         monday = LocalDate.now().plusDays(1);
+        while (monday.getDayOfWeek() == SchedulingRules.CLOSED_DAY) {
+            monday = monday.plusDays(1);
+        }
     }
 
     private TimeSlot buildSlot(Long id, TimeSlotStatus status) {
